@@ -10,6 +10,7 @@ import ManagerDashboard from './pages/ManagerDashboard';
 import ReportsPage from './pages/ReportsPage';
 import ProgramsPage from './pages/ProgramsPage';
 import AlertsPage from './pages/AlertsPage';
+import SchedulesPage from './pages/SchedulesPage';
 
 function ProtectedLayout({ requiredRole }) {
   const { isAuthenticated, user } = useAuthStore();
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="/manager" element={<ManagerDashboard />} />
           <Route path="/programs" element={<ProgramsPage />} />
           <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/schedules" element={<SchedulesPage />} />
         </Route>
 
         {/* Shared routes */}

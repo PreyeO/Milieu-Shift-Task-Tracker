@@ -1,0 +1,405 @@
+import React, { useState } from 'react';
+import { useTaskStore } from '../store/taskStore';
+import { PROGRAMS, getProgramById } from '../data/programs';
+import { getShiftDateString } from '../utils/timeUtils';
+import { 
+  CalendarRange, Plus, Edit2, Trash2, Clock, 
+  Sparkles, Layers, RefreshCw, Search, 
+  Check, X, FileText, AlertTriangle 
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+
+const SHIFTS = [
+  { key: 'day', label: 'Day Shift (7 AM – 3 PM)' },
+  { key: 'evening', label: 'Evening Shift (3 PM – 11 PM)' },
+  { key: 'night', label: 'Night Shift (11 PM – 7 AM)' },
+];
+
+export default function SchedulesPage() {
+  const { 
+    templates, 
+    sessions,
+    addTemplateTask, 
+    updateTemplateTask, 
+    deleteTemplateTask,
+    addActiveTask,
+    updateActiveTask,
+    deleteActiveTask 
+  } = useTaskStore();
+
+  const [selectedProgram, setSelectedProgram] = useState(PROGRAMS[0]?.id || 'parkside-e');
+  const [selectedShift, setSelectedShift] = useState('day');
+  const [isEditingTemplates, setIsEditingTemplates] = useState(true); // true = Templates, false = Active Live Session
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Form Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState(null); // null = Creating, object = Editing
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [startTime, setStartTime] = useState('07:00');
+  const [endTime, setEndTime] = useState('07:30');
+
+  // Determine active session key
+  const activeSessionKey = `${selectedProgram}-${selectedShift}-${getShiftDateString()}`;
+  const activeSession = sessions[activeSessionKey];
+
+  // Get tasks based on current mode
+  const rawTasks = isEditingTemplates 
+    ? (templates[selectedProgram]?.[selectedShift] || [])
+    : (activeSession?.tasks || []);
+
+  // Sort tasks chronologically by start time
+  const sortedTasks = [...rawTasks].sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+  // Filter tasks by search query
+  const filteredTasks = sortedTasks.filter(t => 
+    t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleOpenCreateModal = () => {
+    setEditingTask(null);
+    setTitle('');
+    setDescription('');
+    setStartTime(selectedShift === 'day' ? '07:00' : selectedShift === 'evening' ? '15:00' : '23:00');
+    setEndTime(selectedShift === 'day' ? '07:30' : selectedShift === 'evening' ? '15:30' : '23:30');
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (task) => {
+    setEditingTask(task);
+    setTitle(task.title);
+    setDescription(task.description);
+    setStartTime(task.startTime);
+    setEndTime(task.endTime);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveTask = (e) => {
+    e.preventDefault();
+    if (!title.trim() || !description.trim()) {
+      toast.error('Please fill in all fields.');
+      return;
+    }
+
+    const taskData = { title, description, startTime, endTime };
+
+    if (isEditingTemplates) {
+      if (editingTask) {
+        updateTemplateTask(selectedProgram, selectedShift, editingTask.id, taskData);
+        toast.success('Routine task template updated!');
+      } else {
+        addTemplateTask(selectedProgram, selectedShift, taskData);
+        toast.success('New routine task template added!');
+      }
+    } else {
+      if (editingTask) {
+        updateActiveTask(activeSessionKey, editingTask.id, taskData);
+        toast.success('Live active task updated!');
+      } else {
+        addActiveTask(activeSessionKey, taskData);
+        toast.success('New active task injected to live shift!');
+      }
+    }
+
+    setIsModalOpen(false);
+  };
+
+  const handleDeleteTask = (taskId) => {
+    if (window.confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
+      if (isEditingTemplates) {
+        deleteTemplateTask(selectedProgram, selectedShift, taskId);
+        toast.success('Routine task template deleted.');
+      } else {
+        deleteActiveTask(activeSessionKey, taskId);
+        toast.success('Live active task deleted.');
+      }
+    }
+  };
+
+  const activeProgram = getProgramById(selectedProgram);
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-milieuNavy flex items-center gap-2">
+            <CalendarRange size={24} className="text-milieuBlue" />
+            Schedules & Tasks
+          </h1>
+          <p className="text-slate-500 text-sm mt-0.5">Manage recurring routines and customize live shifts</p>
+        </div>
+
+        <button 
+          onClick={handleOpenCreateModal}
+          className="btn-primary flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
+        >
+          <Plus size={16} />
+          <span>Add Task</span>
+        </button>
+      </div>
+
+      {/* Program & Shift Selector */}
+      <div className="grid md:grid-cols-3 gap-4">
+        {/* Select Program */}
+        <div className="glass-card p-4">
+          <label className="block text-slate-700 text-xs font-semibold uppercase tracking-wider mb-2">Residential Home</label>
+          <select 
+            className="input-field w-full text-slate-800"
+            value={selectedProgram}
+            onChange={(e) => setSelectedProgram(e.target.value)}
+          >
+            {PROGRAMS.map(p => (
+              <option key={p.id} value={p.id}>{p.name} ({p.shortName})</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Select Shift */}
+        <div className="glass-card p-4">
+          <label className="block text-slate-700 text-xs font-semibold uppercase tracking-wider mb-2">Shift Schedule</label>
+          <select 
+            className="input-field w-full text-slate-800"
+            value={selectedShift}
+            onChange={(e) => setSelectedShift(e.target.value)}
+          >
+            {SHIFTS.map(s => (
+              <option key={s.key} value={s.key}>{s.label}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Editing Mode */}
+        <div className="glass-card p-4 flex flex-col justify-between">
+          <label className="block text-slate-700 text-xs font-semibold uppercase tracking-wider mb-1.5">Management Mode</label>
+          <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-lg">
+            <button
+              onClick={() => setIsEditingTemplates(true)}
+              className={`py-1.5 px-3 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1.5 ${
+                isEditingTemplates 
+                  ? 'bg-white text-milieuNavy shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <Layers size={13} />
+              Routines
+            </button>
+            <button
+              onClick={() => {
+                setIsEditingTemplates(false);
+                if (!activeSession) {
+                  toast.error(`No live shift is currently active for ${activeProgram?.name} during this shift. Start a session as staff first.`);
+                }
+              }}
+              className={`py-1.5 px-3 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1.5 ${
+                !isEditingTemplates 
+                  ? 'bg-white text-milieuBlue shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <RefreshCw size={13} className={activeSession ? "animate-spin-slow text-emerald-500" : ""} />
+              Live Shift
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mode Status Info Banner */}
+      <div className={`p-4 rounded-xl border flex items-center gap-3 shadow-sm ${
+        isEditingTemplates 
+          ? 'bg-blue-50/50 border-blue-200 text-blue-800' 
+          : activeSession 
+            ? 'bg-emerald-50/50 border-emerald-200 text-emerald-800'
+            : 'bg-rose-50/50 border-rose-200 text-rose-800'
+      }`}>
+        {isEditingTemplates ? (
+          <>
+            <Sparkles size={18} className="text-milieuBlue flex-shrink-0" />
+            <p className="text-xs leading-relaxed">
+              <strong>Routine Templates Mode:</strong> You are modifying the standard recurring checklist tasks. Changes apply to all <strong>future shifts</strong> initiated by staff.
+            </p>
+          </>
+        ) : activeSession ? (
+          <>
+            <Activity size={18} className="text-emerald-500 flex-shrink-0 animate-pulse" />
+            <p className="text-xs leading-relaxed">
+              <strong>Live Shift Mode:</strong> A live shift is running right now! Edits made here will update the active floor checklist for the staff on duty (Sarah/Sarah's team) instantly.
+            </p>
+          </>
+        ) : (
+          <>
+            <AlertTriangle size={18} className="text-rose-500 flex-shrink-0" />
+            <p className="text-xs leading-relaxed">
+              <strong>Live Shift Inactive:</strong> There is no active shift recorded for {activeProgram?.name} - {selectedShift} shift today. Switch back to <strong>Routine Templates</strong> to configure schedules, or initiate a shift from the staff dashboard first.
+            </p>
+          </>
+        )}
+      </div>
+
+      {/* Search & Checklist Panel */}
+      <div className="glass-card p-6 space-y-4">
+        <div className="flex items-center gap-3 justify-between flex-wrap">
+          <h2 className="text-slate-800 font-bold text-lg flex items-center gap-2">
+            <FileText size={18} className="text-slate-500" />
+            Shift Task Checklist ({filteredTasks.length})
+          </h2>
+          <div className="relative w-full sm:w-64">
+            <Search size={15} className="absolute left-3 top-2.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search tasks..."
+              className="input-field pl-9 pr-4 py-1.5 w-full text-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Tasks List */}
+        {filteredTasks.length === 0 ? (
+          <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+            <CalendarRange size={36} className="mx-auto text-slate-300 mb-3" />
+            <p className="text-slate-800 font-medium text-sm">No tasks scheduled</p>
+            <p className="text-slate-500 text-xs mt-1">Click the "Add Task" button at the top to configure duties.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredTasks.map((task) => (
+              <div 
+                key={task.id}
+                className="flex items-start gap-4 p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 hover:shadow-sm transition-all"
+              >
+                {/* Time Indicator */}
+                <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 text-milieuBlue text-xs font-semibold px-2.5 py-1 rounded-lg flex-shrink-0 mt-0.5">
+                  <Clock size={12} />
+                  <span>{task.startTime} – {task.endTime}</span>
+                </div>
+
+                {/* Task Details */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-slate-800 font-bold text-sm leading-snug">{task.title}</h3>
+                  <p className="text-slate-500 text-xs mt-1 leading-relaxed">{task.description}</p>
+                  
+                  {!isEditingTemplates && task.completedAt && (
+                    <div className="mt-2 inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] font-semibold px-2 py-0.5 rounded border border-emerald-100">
+                      ✓ Completed by {task.completedBy} at {new Date(task.completedAt).toLocaleTimeString('en-CA', {hour:'2-digit', minute:'2-digit'})}
+                    </div>
+                  )}
+                </div>
+
+                {/* CRUD Controls */}
+                <div className="flex items-center gap-1 flex-shrink-0 self-center">
+                  <button 
+                    onClick={() => handleOpenEditModal(task)}
+                    className="p-1.5 text-slate-400 hover:text-milieuBlue hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Edit Task"
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteTask(task.id)}
+                    className="p-1.5 text-slate-400 hover:text-milieuCoral hover:bg-rose-50 rounded-lg transition-colors"
+                    title="Delete Task"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Form Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass-card max-w-lg w-full p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+              <h3 className="text-slate-800 font-bold text-base flex items-center gap-2">
+                <CalendarRange size={18} className="text-milieuBlue" />
+                {editingTask ? 'Edit Schedule Task' : 'Add New Task'}
+              </h3>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-800 rounded-lg transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTask} className="space-y-4">
+              {/* Title */}
+              <div>
+                <label className="block text-slate-700 text-xs font-semibold mb-1.5">Task Title</label>
+                <input 
+                  type="text"
+                  placeholder="e.g. Med Administration, Dinner Cleanup"
+                  className="input-field w-full text-slate-800"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Time Interval */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 text-xs font-semibold mb-1.5">Start Time</label>
+                  <input 
+                    type="time"
+                    className="input-field w-full text-slate-800"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-700 text-xs font-semibold mb-1.5">End Time</label>
+                  <input 
+                    type="time"
+                    className="input-field w-full text-slate-800"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-slate-700 text-xs font-semibold mb-1.5">Instruction & Duties</label>
+                <textarea 
+                  placeholder="Describe clear instructions or compliance criteria for floor staff to complete this duty."
+                  className="input-field w-full h-24 text-slate-800 py-2 resize-none"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4 mt-5">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="btn-secondary py-1.5 px-4 text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary py-1.5 px-5 text-sm flex items-center gap-1.5"
+                >
+                  <Check size={15} />
+                  <span>Save Task</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

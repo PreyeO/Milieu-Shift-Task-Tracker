@@ -9,6 +9,7 @@ import {
   Bell,
   LogOut,
   Shield,
+  CalendarRange,
 } from "lucide-react";
 import milieuLogo from "../../assets/milieu-logo.png";
 
@@ -33,6 +34,7 @@ export default function Sidebar() {
   const managerLinks = [
     { to: "/manager", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/programs", icon: ClipboardList, label: "Programs" },
+    { to: "/schedules", icon: CalendarRange, label: "Schedules" },
     { to: "/reports", icon: BarChart3, label: "Reports" },
     { to: "/alerts", icon: Bell, label: "Alerts", badge: unread },
   ];
@@ -98,7 +100,7 @@ export default function Sidebar() {
           <span>Sign Out</span>
         </button>
         <p className="text-[10px] text-slate-600 text-center pt-2">
-          Milieu Family Services © 2025
+          Milieu Family Services © 2026
         </p>
       </div>
     </aside>

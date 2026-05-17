@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { getTasksForShift } from '../data/taskTemplates';
+import { TASK_TEMPLATES } from '../data/taskTemplates';
 import { getTaskStatus, getShiftDateString } from '../utils/timeUtils';
 
-const buildSessionTasks = (programId, shift, staffId) => {
-  const templates = getTasksForShift(programId, shift);
-  return templates.map((t) => ({
+const buildSessionTasks = (programId, shift, staffId, templates) => {
+  const shiftTemplates = templates[programId]?.[shift] || [];
+  return shiftTemplates.map((t) => ({
     ...t,
     sessionId: `${programId}-${shift}-${Date.now()}-${t.id}`,
     programId,
@@ -23,13 +23,14 @@ export const useTaskStore = create(
   persist(
     (set, get) => ({
       sessions: {},      // { [programId-shift]: { tasks, startedAt, staffId } }
+      templates: TASK_TEMPLATES, // Persistent editable task templates
       activeSessionKey: null,
 
       initSession: (programId, shift, staffId) => {
         const key = `${programId}-${shift}-${getShiftDateString()}`;
         const existing = get().sessions[key];
         if (!existing) {
-          const tasks = buildSessionTasks(programId, shift, staffId);
+          const tasks = buildSessionTasks(programId, shift, staffId, get().templates);
           set((state) => ({
             sessions: { ...state.sessions, [key]: { tasks, startedAt: new Date().toISOString(), staffId, programId, shift } },
             activeSessionKey: key,
@@ -38,6 +39,103 @@ export const useTaskStore = create(
           set({ activeSessionKey: key });
         }
       },
+
+      // Template CRUD operations
+      addTemplateTask: (programId, shift, task) => set((state) => {
+        const updatedTemplates = { ...state.templates };
+        if (!updatedTemplates[programId]) updatedTemplates[programId] = {};
+        if (!updatedTemplates[programId][shift]) updatedTemplates[programId][shift] = [];
+        
+        const newTask = {
+          id: `${programId.slice(0,3)}-${shift[0]}-${Date.now()}`,
+          ...task
+        };
+        
+        updatedTemplates[programId][shift] = [...updatedTemplates[programId][shift], newTask];
+        return { templates: updatedTemplates };
+      }),
+
+      updateTemplateTask: (programId, shift, taskId, updatedFields) => set((state) => {
+        const updatedTemplates = { ...state.templates };
+        if (updatedTemplates[programId]?.[shift]) {
+          updatedTemplates[programId][shift] = updatedTemplates[programId][shift].map(t =>
+            t.id === taskId ? { ...t, ...updatedFields } : t
+          );
+        }
+        return { templates: updatedTemplates };
+      }),
+
+      deleteTemplateTask: (programId, shift, taskId) => set((state) => {
+        const updatedTemplates = { ...state.templates };
+        if (updatedTemplates[programId]?.[shift]) {
+          updatedTemplates[programId][shift] = updatedTemplates[programId][shift].filter(t => t.id !== taskId);
+        }
+        return { templates: updatedTemplates };
+      }),
+
+      // Active Shift CRUD operations (Ad-hoc edits for currently running shift)
+      addActiveTask: (sessionKey, task) => set((state) => {
+        const session = state.sessions[sessionKey];
+        if (!session) return {};
+        
+        const newTask = {
+          id: `active-${Date.now()}`,
+          sessionId: `${session.programId}-${session.shift}-${Date.now()}-active`,
+          programId: session.programId,
+          shift: session.shift,
+          staffId: session.staffId,
+          status: 'upcoming',
+          completedAt: null,
+          completedBy: null,
+          comment: '',
+          alertSent: false,
+          ...task
+        };
+        
+        return {
+          sessions: {
+            ...state.sessions,
+            [sessionKey]: {
+              ...session,
+              tasks: [...session.tasks, newTask]
+            }
+          }
+        };
+      }),
+
+      updateActiveTask: (sessionKey, taskId, updatedFields) => set((state) => {
+        const session = state.sessions[sessionKey];
+        if (!session) return {};
+        
+        const updatedTasks = session.tasks.map(t =>
+          t.id === taskId ? { ...t, ...updatedFields, status: t.completedAt ? t.status : getTaskStatus({ ...t, ...updatedFields }) } : t
+        );
+        
+        return {
+          sessions: {
+            ...state.sessions,
+            [sessionKey]: {
+              ...session,
+              tasks: updatedTasks
+            }
+          }
+        };
+      }),
+
+      deleteActiveTask: (sessionKey, taskId) => set((state) => {
+        const session = state.sessions[sessionKey];
+        if (!session) return {};
+        
+        return {
+          sessions: {
+            ...state.sessions,
+            [sessionKey]: {
+              ...session,
+              tasks: session.tasks.filter(t => t.id !== taskId)
+            }
+          }
+        };
+      }),
 
       getActiveTasks: () => {
         const { sessions, activeSessionKey } = get();

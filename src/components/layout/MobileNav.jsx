@@ -10,6 +10,7 @@ import {
   ClipboardList,
   BarChart3,
   LogOut,
+  CalendarRange,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { getProgramById } from "../../data/programs";
@@ -30,6 +31,7 @@ export default function MobileNav() {
   const managerLinks = [
     { to: "/manager", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/programs", icon: ClipboardList, label: "Programs" },
+    { to: "/schedules", icon: CalendarRange, label: "Schedules" },
     { to: "/reports", icon: BarChart3, label: "Reports" },
     { to: "/alerts", icon: Bell, label: "Alerts", badge: unread },
   ];
