@@ -12,8 +12,8 @@ const COLORS = { completed: '#10b981', late: '#f59e0b', missed: '#ef4444', upcom
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-navy-800 border border-white/10 rounded-xl p-3 shadow-xl text-xs">
-      <p className="text-white font-semibold mb-2">{label}</p>
+    <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-xl text-xs">
+      <p className="text-slate-800 font-semibold mb-2">{label}</p>
       {payload.map(p => (
         <p key={p.name} style={{ color: p.fill || p.stroke }} className="mb-0.5">
           {p.name}: <span className="font-bold">{p.value}{p.name === 'Compliance' ? '%' : ''}</span>
@@ -103,11 +103,11 @@ export default function ReportsPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <BarChart3 size={22} className="text-teal-400" />
+          <h1 className="text-2xl font-bold text-milieuNavy flex items-center gap-2">
+            <BarChart3 size={22} className="text-milieuBlue" />
             Reports
           </h1>
-          <p className="text-slate-400 text-sm mt-0.5">Compliance analytics & shift history</p>
+          <p className="text-slate-500 text-sm mt-0.5">Compliance analytics & shift history</p>
         </div>
         <button className="btn-secondary flex items-center gap-2 text-sm">
           <Download size={15} />
@@ -123,7 +123,7 @@ export default function ReportsPage() {
             <button
               key={t}
               onClick={() => setReportType(t)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all capitalize ${reportType === t ? 'bg-teal-500 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all capitalize ${reportType === t ? 'bg-milieuBlue text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
             >
               {t}
             </button>
@@ -135,20 +135,20 @@ export default function ReportsPage() {
           value={selectedProgram}
           onChange={e => setSelectedProgram(e.target.value)}
         >
-          <option value="all" className="bg-navy-800 text-white">All Programs</option>
-          {PROGRAMS.map(p => <option key={p.id} value={p.id} className="bg-navy-800 text-white">{p.name}</option>)}
+          <option value="all">All Programs</option>
+          {PROGRAMS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: 'Total Tasks', value: stats.total, color: 'text-white' },
-          { label: 'Completed', value: stats.completed, color: 'text-emerald-400' },
-          { label: 'Late', value: stats.late, color: 'text-amber-400' },
-          { label: 'Missed', value: stats.missed, color: 'text-red-400' },
-          { label: 'Compliance', value: `${stats.compliance}%`, color: stats.compliance >= 80 ? 'text-emerald-400' : 'text-amber-400' },
-          { label: 'On-Time Rate', value: `${stats.onTime}%`, color: stats.onTime >= 80 ? 'text-emerald-400' : 'text-amber-400' },
+          { label: 'Total Tasks', value: stats.total, color: 'text-slate-800' },
+          { label: 'Completed', value: stats.completed, color: 'text-emerald-600' },
+          { label: 'Late', value: stats.late, color: 'text-amber-600' },
+          { label: 'Missed', value: stats.missed, color: 'text-rose-600' },
+          { label: 'Compliance', value: `${stats.compliance}%`, color: stats.compliance >= 80 ? 'text-emerald-600' : 'text-amber-600' },
+          { label: 'On-Time Rate', value: `${stats.onTime}%`, color: stats.onTime >= 80 ? 'text-emerald-600' : 'text-amber-600' },
         ].map(({ label, value, color }) => (
           <div key={label} className="glass-card p-3 text-center">
             <p className={`text-xl font-bold ${color}`}>{value}</p>
@@ -160,14 +160,14 @@ export default function ReportsPage() {
       <div className="grid lg:grid-cols-2 gap-5">
         {/* Weekly bar chart */}
         <div className="glass-card p-5">
-          <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-            <TrendingUp size={16} className="text-teal-400" />
+          <h3 className="text-slate-800 font-semibold mb-4 flex items-center gap-2">
+            <TrendingUp size={16} className="text-milieuBlue" />
             {reportType === 'monthly' ? 'Monthly Program Compliance' : 'Weekly Compliance Trend'}
           </h3>
           <ResponsiveContainer width="100%" height={220}>
             {reportType === 'monthly' ? (
               <LineChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="week" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} domain={[0, 100]} unit="%" />
                 <Tooltip content={<CustomTooltip />} />
@@ -178,11 +178,11 @@ export default function ReportsPage() {
               </LineChart>
             ) : (
               <BarChart data={weeklyData} barSize={20}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="day" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} unit="%" />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="compliance" name="Compliance" fill="#0ea5a0" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="compliance" name="Compliance" fill="#005b8e" radius={[4, 4, 0, 0]} />
               </BarChart>
             )}
           </ResponsiveContainer>
@@ -190,8 +190,8 @@ export default function ReportsPage() {
 
         {/* Pie chart */}
         <div className="glass-card p-5">
-          <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-            <CheckCircle size={16} className="text-teal-400" />
+          <h3 className="text-slate-800 font-semibold mb-4 flex items-center gap-2">
+            <CheckCircle size={16} className="text-milieuBlue" />
             Task Status Breakdown
           </h3>
           {pieData.length > 0 ? (
@@ -213,13 +213,13 @@ export default function ReportsPage() {
 
         {/* Program comparison */}
         <div className="glass-card p-5">
-          <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-            <BarChart3 size={16} className="text-teal-400" />
+          <h3 className="text-slate-800 font-semibold mb-4 flex items-center gap-2">
+            <BarChart3 size={16} className="text-milieuBlue" />
             Program Compliance Comparison
           </h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={programComparison} barSize={28}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} unit="%" domain={[0, 100]} />
               <Tooltip content={<CustomTooltip />} />
@@ -236,14 +236,14 @@ export default function ReportsPage() {
 
         {/* Staff Performance */}
         <div className="glass-card p-5">
-          <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-            <User size={16} className="text-teal-400" />
+          <h3 className="text-slate-800 font-semibold mb-4 flex items-center gap-2">
+            <User size={16} className="text-milieuBlue" />
             Staff Sign-Off Activity
           </h3>
           {staffStats.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={staffStats} barSize={28}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
                 <Tooltip content={<CustomTooltip />} />

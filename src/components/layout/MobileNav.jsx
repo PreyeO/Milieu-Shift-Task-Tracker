@@ -1,17 +1,15 @@
 import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import { useAlertStore } from "../../store/alertStore";
 import {
   Bell,
   Menu,
   X,
-  Activity,
   LayoutDashboard,
   ClipboardList,
   BarChart3,
   LogOut,
-  Shield,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { getProgramById } from "../../data/programs";
@@ -45,7 +43,7 @@ export default function MobileNav() {
 
   return (
     <>
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-navy-900/95 border-b border-white/10 backdrop-blur-md">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-white/95 border-b border-slate-200 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <img src={milieuLogo} alt="Milieu" className="h-7 object-contain" />
         </div>
@@ -58,22 +56,22 @@ export default function MobileNav() {
               </span>
             </div>
           )}
-          <button onClick={() => setOpen(!open)} className="text-slate-300 p-1">
+          <button onClick={() => setOpen(!open)} className="text-slate-600 p-1">
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </header>
 
       {open && (
-        <div className="lg:hidden fixed inset-0 z-40 flex flex-col pt-14 bg-navy-900/98 backdrop-blur-md animate-fade-in">
-          <div className="p-4 border-b border-white/10">
+        <div className="lg:hidden fixed inset-0 z-40 flex flex-col pt-14 bg-white/98 backdrop-blur-md animate-fade-in">
+          <div className="p-4 border-b border-slate-200">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-teal-500/20 border-2 border-teal-500/40 flex items-center justify-center text-teal-300 font-bold">
+              <div className="w-10 h-10 rounded-full bg-milieuNavy/10 border-2 border-milieuNavy/20 flex items-center justify-center text-milieuNavy font-bold">
                 {user?.initials}
               </div>
               <div>
-                <p className="text-white font-semibold">{user?.name}</p>
-                <p className="text-xs text-slate-400 capitalize">
+                <p className="text-slate-800 font-semibold">{user?.name}</p>
+                <p className="text-xs text-slate-500 capitalize">
                   {isManager ? "Manager" : program?.name || "Staff"}
                 </p>
               </div>
@@ -100,7 +98,7 @@ export default function MobileNav() {
               </NavLink>
             ))}
           </nav>
-          <div className="p-4 border-t border-white/10">
+          <div className="p-4 border-t border-slate-200">
             <button
               onClick={handleLogout}
               className="nav-item w-full text-left text-red-400 hover:bg-red-500/10 py-4 text-base"

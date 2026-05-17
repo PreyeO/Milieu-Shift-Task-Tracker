@@ -6,9 +6,9 @@ import { Bell, AlertTriangle, CheckCircle, Clock, Filter, Trash2, Eye } from 'lu
 const ALERT_TYPES = { all: 'All', missed: 'Missed', late: 'Late', 'bulk-submit': 'Bulk Submit' };
 
 const ALERT_COLORS = {
-  missed: { border: 'border-l-red-500', bg: 'bg-red-500/5', icon: 'text-red-400', badge: 'bg-red-500/15 text-red-400 border-red-500/30' },
-  late: { border: 'border-l-amber-500', bg: 'bg-amber-500/5', icon: 'text-amber-400', badge: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
-  'bulk-submit': { border: 'border-l-orange-500', bg: 'bg-orange-500/5', icon: 'text-orange-400', badge: 'bg-orange-500/15 text-orange-400 border-orange-500/30' },
+  missed: { border: 'border-l-rose-500', bg: 'bg-rose-50/50', icon: 'text-rose-500', badge: 'bg-rose-100 text-rose-700 border-rose-200' },
+  late: { border: 'border-l-amber-500', bg: 'bg-amber-50/50', icon: 'text-amber-500', badge: 'bg-amber-100 text-amber-700 border-amber-200' },
+  'bulk-submit': { border: 'border-l-orange-500', bg: 'bg-orange-50/50', icon: 'text-orange-500', badge: 'bg-orange-100 text-orange-700 border-orange-200' },
 };
 
 export default function AlertsPage() {
@@ -28,14 +28,14 @@ export default function AlertsPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Bell size={22} className="text-teal-400" />
+          <h1 className="text-2xl font-bold text-milieuNavy flex items-center gap-2">
+            <Bell size={22} className="text-milieuBlue" />
             Alerts
             {unread > 0 && (
-              <span className="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5">{unread}</span>
+              <span className="bg-milieuCoral text-white text-xs font-bold rounded-full px-2 py-0.5">{unread}</span>
             )}
           </h1>
-          <p className="text-slate-400 text-sm mt-0.5">Missed tasks, late sign-offs and bulk submissions</p>
+          <p className="text-slate-500 text-sm mt-0.5">Missed tasks, late sign-offs and bulk submissions</p>
         </div>
         <div className="flex gap-2">
           {unread > 0 && (
@@ -59,7 +59,7 @@ export default function AlertsPage() {
             <button
               key={key}
               onClick={() => setFilter(key)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === key ? 'bg-teal-500 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === key ? 'bg-milieuBlue text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
             >
               {label}
               {key !== 'all' && (
@@ -74,17 +74,17 @@ export default function AlertsPage() {
           value={programFilter}
           onChange={e => setProgramFilter(e.target.value)}
         >
-          <option value="all" className="bg-navy-800 text-white">All Programs</option>
-          {PROGRAMS.map(p => <option key={p.id} value={p.id} className="bg-navy-800 text-white">{p.name}</option>)}
+          <option value="all">All Programs</option>
+          {PROGRAMS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
 
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'Missed Tasks', count: alerts.filter(a => a.type === 'missed').length, color: 'text-red-400' },
-          { label: 'Late Sign-Offs', count: alerts.filter(a => a.type === 'late').length, color: 'text-amber-400' },
-          { label: 'Bulk Submits', count: alerts.filter(a => a.type === 'bulk-submit').length, color: 'text-orange-400' },
+          { label: 'Missed Tasks', count: alerts.filter(a => a.type === 'missed').length, color: 'text-rose-600' },
+          { label: 'Late Sign-Offs', count: alerts.filter(a => a.type === 'late').length, color: 'text-amber-600' },
+          { label: 'Bulk Submits', count: alerts.filter(a => a.type === 'bulk-submit').length, color: 'text-orange-600' },
         ].map(({ label, count, color }) => (
           <div key={label} className="glass-card p-3 text-center">
             <p className={`text-xl font-bold ${color}`}>{count}</p>
@@ -95,10 +95,10 @@ export default function AlertsPage() {
 
       {/* Alert list */}
       {filtered.length === 0 ? (
-        <div className="glass-card p-12 text-center">
-          <CheckCircle size={40} className="text-emerald-400 mx-auto mb-3" />
-          <p className="text-white font-medium">No alerts found</p>
-          <p className="text-slate-400 text-sm mt-1">
+        <div className="glass-card p-12 text-center bg-emerald-50/50">
+          <CheckCircle size={40} className="text-emerald-500 mx-auto mb-3" />
+          <p className="text-slate-800 font-medium">No alerts found</p>
+          <p className="text-slate-500 text-sm mt-1">
             {alerts.length === 0 ? 'All tasks are being completed on time.' : 'Try adjusting the filters.'}
           </p>
         </div>
@@ -111,7 +111,7 @@ export default function AlertsPage() {
               <div
                 key={alert.id}
                 onClick={() => markRead(alert.id)}
-                className={`glass-card p-4 border-l-4 ${style.border} ${style.bg} cursor-pointer hover:border-white/20 transition-colors ${!alert.read ? 'ring-1 ring-white/5' : 'opacity-80'}`}
+                className={`glass-card p-4 border-l-4 ${style.border} ${style.bg} cursor-pointer hover:shadow-md transition-all ${!alert.read ? 'ring-1 ring-slate-200 shadow-sm' : 'opacity-70'}`}
               >
                 <div className="flex items-start gap-3">
                   <AlertTriangle size={18} className={`${style.icon} flex-shrink-0 mt-0.5`} />
@@ -122,7 +122,7 @@ export default function AlertsPage() {
                           {alert.type === 'bulk-submit' ? 'Bulk Submit' : alert.type}
                         </span>
                         {!alert.read && (
-                          <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                          <span className="w-2 h-2 rounded-full bg-milieuBlue animate-pulse" />
                         )}
                       </div>
                       <div className="flex items-center gap-1 text-slate-500 text-xs">
@@ -133,10 +133,10 @@ export default function AlertsPage() {
                         })}
                       </div>
                     </div>
-                    <p className="text-white text-sm font-medium mb-0.5">
+                    <p className="text-slate-800 text-sm font-semibold mb-0.5">
                       {alert.taskTitle || 'System Alert'}
                     </p>
-                    <p className="text-slate-400 text-xs leading-relaxed">{alert.message}</p>
+                    <p className="text-slate-600 text-xs leading-relaxed">{alert.message}</p>
                     <div className="flex items-center gap-3 mt-2">
                       {program && (
                         <span className="text-[10px] text-slate-500 flex items-center gap-1">

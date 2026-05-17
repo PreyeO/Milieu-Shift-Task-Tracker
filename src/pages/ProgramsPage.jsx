@@ -19,27 +19,28 @@ function TaskRow({ task, sessionTask }) {
   const completedAt = sessionTask?.completedAt;
   return (
     <div className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
-      status === 'completed' ? 'border-emerald-500/20 bg-emerald-500/5' :
-      status === 'late' ? 'border-amber-500/20 bg-amber-500/5' :
-      status === 'missed' ? 'border-red-500/20 bg-red-500/5' :
-      status === 'pending' ? 'border-blue-500/30 bg-blue-500/8' :
-      'border-white/5 bg-white/2'
+      status === 'completed' ? 'border-emerald-200 bg-emerald-50' :
+      status === 'late' ? 'border-amber-200 bg-amber-50' :
+      status === 'missed' ? 'border-rose-200 bg-rose-50' :
+      status === 'pending' ? 'border-blue-200 bg-blue-50' :
+      'border-slate-100 bg-slate-50'
     }`}>
       <div className="text-slate-500 text-xs font-mono w-24 flex-shrink-0 pt-0.5">
         {task.startTime}–{task.endTime}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-white text-sm font-medium">{task.title}</p>
-        <p className="text-slate-500 text-xs mt-0.5 leading-relaxed">{task.description}</p>
+        <p className="text-slate-800 text-sm font-medium">{task.title}</p>
+        <p className="text-slate-600 text-xs mt-0.5 leading-relaxed">{task.description}</p>
         {completedAt && (
           <div className="mt-1">
-            <p className="text-emerald-400 text-[10px]">
+            <p className="text-emerald-600 text-[10px]">
               ✓ Signed off at {new Date(completedAt).toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' })}
-              {sessionTask?.completedBy ? ` by ${sessionTask.completedBy}` : ''}
-              {status === 'late' && ' · LATE'}
+              {sessionTask?.completedBy ? ` by ` : ''}
+              {sessionTask?.completedBy && <span className="font-semibold text-slate-700 bg-slate-200 px-1 py-0.5 rounded">{sessionTask.completedBy}</span>}
+              {status === 'late' && <span className="text-amber-600 font-semibold ml-1">· LATE</span>}
             </p>
             {sessionTask?.comment && (
-              <p className="text-slate-400 text-[10px] flex items-start gap-1 mt-0.5">
+              <p className="text-slate-500 text-[10px] flex items-start gap-1 mt-0.5">
                 <MessageSquare size={10} className="mt-0.5 flex-shrink-0" />
                 <span>{sessionTask.comment}</span>
               </p>
@@ -64,8 +65,8 @@ function ProgramDetail({ program, sessions }) {
   const compliance = calculateCompliance(sessionTasks.filter(t => t.status !== 'upcoming'));
 
   const colorBorder = {
-    teal: 'border-teal-500/40', blue: 'border-blue-500/40', purple: 'border-purple-500/40',
-    orange: 'border-orange-500/40', amber: 'border-amber-500/40', green: 'border-green-500/40',
+    teal: 'border-emerald-400', blue: 'border-milieuBlue', purple: 'border-purple-400',
+    orange: 'border-orange-400', amber: 'border-milieuYellow', green: 'border-emerald-400',
   };
 
   return (
@@ -76,11 +77,11 @@ function ProgramDetail({ program, sessions }) {
       >
         <div className="flex items-center gap-3">
           <div>
-            <h3 className="text-white font-bold text-base text-left">{program.name}</h3>
-            <p className="text-slate-400 text-xs text-left flex items-center gap-3 mt-0.5">
+            <h3 className="text-slate-800 font-bold text-base text-left">{program.name}</h3>
+            <p className="text-slate-500 text-xs text-left flex items-center gap-3 mt-0.5">
               <span className="flex items-center gap-1"><MapPin size={10} />{program.location}</span>
               <span className="flex items-center gap-1"><Users size={10} />Cap. {program.capacity}</span>
-              {session && <span className="text-teal-400">Today: {compliance}% compliance</span>}
+              {session && <span className="text-milieuBlue font-medium">Today: {compliance}% compliance</span>}
             </p>
           </div>
         </div>
@@ -98,7 +99,7 @@ function ProgramDetail({ program, sessions }) {
                   key={key}
                   onClick={() => setShift(key)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                    shift === key ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30' : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    shift === key ? 'bg-blue-50 text-milieuBlue border border-blue-200' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                   }`}
                 >
                   <Icon size={12} />
@@ -157,11 +158,11 @@ export default function ProgramsPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <ClipboardList size={22} className="text-teal-400" />
+          <h1 className="text-2xl font-bold text-milieuNavy flex items-center gap-2">
+            <ClipboardList size={22} className="text-milieuBlue" />
             Programs
           </h1>
-          <p className="text-slate-400 text-sm mt-0.5">Task schedules for all residential homes</p>
+          <p className="text-slate-500 text-sm mt-0.5">Task schedules for all residential homes</p>
         </div>
       </div>
 
@@ -191,15 +192,15 @@ export default function ProgramsPage() {
               onClick={() => setSearchParams({ p: p.id })}
               className={`glass-card p-3 text-center w-full transition-all duration-200 ${
                 isFocused 
-                  ? 'ring-2 ring-teal-400 bg-teal-500/10 scale-105 shadow-lg shadow-teal-500/20' 
-                  : 'hover:bg-white/10 hover:border-white/20'
+                  ? 'ring-2 ring-milieuBlue bg-blue-50 scale-105 shadow-md shadow-blue-500/10' 
+                  : 'hover:bg-slate-50 hover:border-slate-300'
               }`}
             >
-              <p className="text-white text-sm font-bold">{p.shortName}</p>
-              <p className={`text-lg font-bold mt-1 ${comp >= 90 ? 'text-emerald-400' : comp >= 70 ? 'text-amber-400' : comp > 0 ? 'text-red-400' : 'text-slate-600'}`}>
+              <p className="text-slate-800 text-sm font-bold">{p.shortName}</p>
+              <p className={`text-lg font-bold mt-1 ${comp >= 90 ? 'text-emerald-600' : comp >= 70 ? 'text-amber-600' : comp > 0 ? 'text-rose-600' : 'text-slate-400'}`}>
                 {tasks.length > 0 ? `${comp}%` : '—'}
               </p>
-              <p className="text-slate-600 text-[10px]">compliance</p>
+              <p className="text-slate-500 text-[10px]">compliance</p>
             </button>
           );
         })}

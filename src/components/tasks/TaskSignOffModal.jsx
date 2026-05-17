@@ -28,7 +28,7 @@ export default function TaskSignOffModal({ task, isOpen, onClose }) {
     setTimeout(() => {
       completeTask(task.id, comment, initials.toUpperCase().trim());
       toast.success(`✓ "${task.title}" signed off!`, {
-        style: { background: '#0f1f36', color: '#fff', border: '1px solid #0ea5a0' },
+        style: { background: '#ffffff', color: '#0f172a', border: '1px solid #10b981' },
         duration: 4000,
       });
       setConfirming(false);
@@ -42,12 +42,12 @@ export default function TaskSignOffModal({ task, isOpen, onClose }) {
     <Modal isOpen={isOpen} onClose={onClose} title="Sign Off Task" size="md">
       <div className="space-y-5">
         {/* Task info */}
-        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+        <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
           <div className="flex items-start justify-between gap-3 mb-2">
-            <h3 className="text-white font-semibold text-base leading-snug">{task.title}</h3>
+            <h3 className="text-slate-800 font-semibold text-base leading-snug">{task.title}</h3>
             <Badge status={task.status} />
           </div>
-          <p className="text-slate-400 text-sm mb-3 leading-relaxed">{task.description}</p>
+          <p className="text-slate-600 text-sm mb-3 leading-relaxed">{task.description}</p>
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <Clock size={12} />
             <span>Scheduled: {task.startTime} – {task.endTime}</span>
@@ -56,16 +56,16 @@ export default function TaskSignOffModal({ task, isOpen, onClose }) {
 
         {/* Late warning */}
         {isPast && (
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-amber-400 text-sm">
-            ⚠️ This task window has passed. Signing off now will be marked as <strong>LATE</strong> with the current timestamp.
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-600 text-sm">
+            ⚠️ This task window has passed. Signing off now will be marked as <strong className="text-amber-700">LATE</strong> with the current timestamp.
           </div>
         )}
 
         {/* Already completed */}
         {task.completedAt && (
-          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-emerald-400 text-sm">
-            ✓ Completed at {formatTime(task.completedAt)} by {task.completedBy || user?.name}
-            {task.comment && <p className="mt-1 text-slate-400">Note: {task.comment}</p>}
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-emerald-600 text-sm">
+            ✓ Completed at {formatTime(task.completedAt)} by <span className="font-semibold">{task.completedBy || user?.name}</span>
+            {task.comment && <p className="mt-1 text-slate-500">Note: {task.comment}</p>}
           </div>
         )}
 
@@ -73,8 +73,8 @@ export default function TaskSignOffModal({ task, isOpen, onClose }) {
         {!task.completedAt && (
           <>
             <div>
-              <label className="text-slate-300 text-sm font-medium flex items-center gap-2 mb-2">
-                Staff Initials <span className="text-red-400">*</span>
+              <label className="text-slate-700 text-sm font-medium flex items-center gap-2 mb-2">
+                Staff Initials <span className="text-milieuCoral">*</span>
               </label>
               <input
                 type="text"
@@ -87,7 +87,7 @@ export default function TaskSignOffModal({ task, isOpen, onClose }) {
             </div>
 
             <div>
-              <label className="text-slate-300 text-sm font-medium flex items-center gap-2 mb-2">
+              <label className="text-slate-700 text-sm font-medium flex items-center gap-2 mb-2">
                 <MessageSquare size={14} />
                 Add a note (optional)
               </label>

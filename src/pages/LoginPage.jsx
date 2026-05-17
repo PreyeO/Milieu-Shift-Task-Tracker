@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useTaskStore } from "../store/taskStore";
@@ -77,10 +77,10 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background decorations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-500/8 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-500/3 rounded-full blur-3xl" />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none bg-slate-50">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-milieuCoral/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-milieuBlue/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-milieuYellow/10 rounded-full blur-3xl" />
       </div>
 
       <div className="w-full max-w-md relative z-10 animate-fade-in">
@@ -91,26 +91,22 @@ export default function LoginPage() {
             alt="Milieu"
             className="h-16 mx-auto mb-4 object-contain"
           />
-
-          <p className="text-slate-400 text-sm mt-1">
-            30-Minute Shift Task Tracker
-          </p>
         </div>
 
         {/* Login card */}
         <div className="glass-card p-6 mb-4">
-          <h2 className="text-white font-semibold text-lg mb-5 text-center">
+          <h2 className="text-milieuNavy font-semibold text-lg mb-5 text-center">
             Sign In to Your Account
           </h2>
 
           {/* Role Tabs */}
-          <div className="flex bg-white/5 p-1 rounded-xl mb-6">
+          <div className="flex bg-slate-100 p-1 rounded-xl mb-6">
             <button
               onClick={() => handleRoleChange("staff")}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 role === "staff"
-                  ? "bg-teal-500 text-white shadow-md"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-white text-milieuNavy shadow-sm"
+                  : "text-slate-500 hover:text-milieuNavy"
               }`}
             >
               <User size={16} /> Staff
@@ -119,8 +115,8 @@ export default function LoginPage() {
               onClick={() => handleRoleChange("manager")}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 role === "manager"
-                  ? "bg-blue-500 text-white shadow-md"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-white text-milieuNavy shadow-sm"
+                  : "text-slate-500 hover:text-milieuNavy"
               }`}
             >
               <Shield size={16} /> Manager
@@ -128,7 +124,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-red-400 text-sm mb-4 text-center">
+            <div className="bg-milieuCoral/10 border border-milieuCoral/30 rounded-xl p-3 text-milieuCoral text-sm mb-4 text-center">
               {error}
             </div>
           )}
@@ -137,7 +133,7 @@ export default function LoginPage() {
             {/* Program Selection (Only for Staff) */}
             {role === "staff" && (
               <div className="animate-fade-in">
-                <label className="text-slate-300 text-sm font-medium block mb-1.5">
+                <label className="text-slate-700 text-sm font-medium block mb-1.5">
                   Select Program
                 </label>
                 <div className="relative">
@@ -151,7 +147,7 @@ export default function LoginPage() {
                     onChange={(e) => setProgramId(e.target.value)}
                   >
                     {PROGRAMS.map((p) => (
-                      <option key={p.id} value={p.id} className="bg-navy-800">
+                      <option key={p.id} value={p.id}>
                         {p.name}
                       </option>
                     ))}
@@ -161,7 +157,7 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label className="text-slate-300 text-sm font-medium block mb-1.5">
+              <label className="text-slate-700 text-sm font-medium block mb-1.5">
                 Username
               </label>
               <div className="relative">
@@ -182,7 +178,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="text-slate-300 text-sm font-medium block mb-1.5">
+              <label className="text-slate-700 text-sm font-medium block mb-1.5">
                 Password
               </label>
               <div className="relative">
@@ -213,10 +209,10 @@ export default function LoginPage() {
               id="login-btn"
               onClick={handleLogin}
               disabled={loading || !username || !password}
-              className={`w-full flex items-center justify-center gap-2 h-11 mt-2 text-white font-semibold rounded-xl transition-all duration-200 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`w-full flex items-center justify-center gap-2 h-11 mt-2 text-white font-semibold rounded-xl transition-all duration-200 shadow-sm hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
                 role === "manager"
-                  ? "bg-blue-500 hover:bg-blue-400 hover:shadow-blue-500/25"
-                  : "bg-teal-500 hover:bg-teal-400 hover:shadow-teal-500/25"
+                  ? "bg-milieuNavy hover:bg-milieuNavy/90"
+                  : "bg-milieuBlue hover:bg-blue-600"
               }`}
             >
               {loading ? (

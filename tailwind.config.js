@@ -7,6 +7,10 @@ export default {
   theme: {
     extend: {
       colors: {
+        milieuNavy: '#0a1c36',
+        milieuCoral: '#e47c66',
+        milieuYellow: '#f6c42d',
+        milieuBlue: '#3482c6',
         navy: {
           50: '#eef2ff',
           100: '#e0e7ff',

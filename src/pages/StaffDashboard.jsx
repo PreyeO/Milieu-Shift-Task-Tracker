@@ -30,7 +30,7 @@ function CountdownTimer({ endTime }) {
   const urgent = secs < 5 * 60 && secs > 0;
 
   return (
-    <span className={`font-mono font-bold tabular-nums text-sm ${urgent ? 'text-red-400 animate-pulse' : 'text-teal-400'}`}>
+    <span className={`font-mono font-bold tabular-nums text-sm ${urgent ? 'text-milieuCoral animate-pulse' : 'text-milieuBlue'}`}>
       {m}:{String(s).padStart(2, '0')}
     </span>
   );
@@ -66,30 +66,30 @@ export default function StaffDashboard() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">My Tasks</h1>
-          <p className="text-slate-400 text-sm mt-0.5 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-milieuNavy">My Tasks</h1>
+          <p className="text-slate-600 text-sm mt-0.5 flex items-center gap-2">
             <ShiftIcon size={14} className={SHIFT_COLORS[selectedShift]} />
             {program?.name} · {getShiftLabel(selectedShift)}
           </p>
         </div>
         <div className="text-right">
           <p className="text-slate-500 text-xs">Today</p>
-          <p className="text-white text-sm font-medium">{new Date().toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+          <p className="text-slate-800 text-sm font-medium">{new Date().toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
         </div>
       </div>
 
       {/* Current active task banner */}
       {currentTask && (
-        <div className="bg-gradient-to-r from-blue-500/15 to-teal-500/10 border border-blue-500/30 rounded-2xl p-4 animate-fade-in">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 animate-fade-in shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-blue-300 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+            <p className="text-milieuBlue text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-milieuBlue animate-pulse" />
               Currently Active
             </p>
             <CountdownTimer endTime={currentTask.endTime} />
           </div>
-          <h3 className="text-white font-bold text-lg leading-tight mb-1">{currentTask.title}</h3>
-          <p className="text-slate-400 text-sm mb-3 leading-relaxed">{currentTask.description}</p>
+          <h3 className="text-slate-800 font-bold text-lg leading-tight mb-1">{currentTask.title}</h3>
+          <p className="text-slate-600 text-sm mb-3 leading-relaxed">{currentTask.description}</p>
           <button
             onClick={() => openTask(currentTask)}
             className="btn-primary w-full flex items-center justify-center gap-2"
@@ -103,12 +103,12 @@ export default function StaffDashboard() {
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Completed', value: completed, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-          { label: 'Late', value: late, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-          { label: 'Missed', value: missed, color: 'text-red-400', bg: 'bg-red-500/10' },
-          { label: 'Compliance', value: `${compliance}%`, color: compliance >= 80 ? 'text-emerald-400' : 'text-amber-400', bg: 'bg-white/5' },
+          { label: 'Completed', value: completed, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: 'Late', value: late, color: 'text-milieuYellow', bg: 'bg-amber-50' },
+          { label: 'Missed', value: missed, color: 'text-milieuCoral', bg: 'bg-rose-50' },
+          { label: 'Compliance', value: `${compliance}%`, color: compliance >= 80 ? 'text-emerald-600' : 'text-amber-500', bg: 'bg-white' },
         ].map(({ label, value, color, bg }) => (
-          <div key={label} className={`${bg} border border-white/10 rounded-xl p-3 text-center`}>
+          <div key={label} className={`${bg} border border-slate-200 rounded-xl p-3 text-center shadow-sm`}>
             <p className={`text-2xl font-bold ${color}`}>{value}</p>
             <p className="text-slate-500 text-xs mt-0.5">{label}</p>
           </div>
@@ -118,12 +118,12 @@ export default function StaffDashboard() {
       {/* Shift progress */}
       <div className="glass-card p-4">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-slate-300 text-sm font-medium">Shift Progress</p>
-          <p className="text-teal-400 text-sm font-semibold">{completed + late}/{tasks.length} done</p>
+          <p className="text-slate-700 text-sm font-medium">Shift Progress</p>
+          <p className="text-milieuBlue text-sm font-semibold">{completed + late}/{tasks.length} done</p>
         </div>
-        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-teal-500 to-teal-400 rounded-full transition-all duration-700"
+            className="h-full bg-gradient-to-r from-milieuNavy to-milieuBlue rounded-full transition-all duration-700"
             style={{ width: `${tasks.length ? ((completed + late) / tasks.length) * 100 : 0}%` }}
           />
         </div>
@@ -131,11 +131,11 @@ export default function StaffDashboard() {
 
       {/* Task list */}
       <div>
-        <h2 className="text-slate-300 text-sm font-semibold uppercase tracking-wider mb-3">Today's Schedule</h2>
+        <h2 className="text-slate-500 text-sm font-semibold uppercase tracking-wider mb-3">Today's Schedule</h2>
         <div className="space-y-2">
           {tasks.length === 0 ? (
             <div className="glass-card p-8 text-center">
-              <Calendar size={32} className="text-slate-600 mx-auto mb-3" />
+              <Calendar size={32} className="text-slate-400 mx-auto mb-3" />
               <p className="text-slate-500">No tasks scheduled for this shift.</p>
             </div>
           ) : (
