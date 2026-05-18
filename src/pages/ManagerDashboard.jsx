@@ -1,39 +1,54 @@
-import React, { useState, useEffect } from 'react';
-import { useAuthStore } from '../store/authStore';
-import { useTaskStore } from '../store/taskStore';
-import { useAlertStore } from '../store/alertStore';
-import { PROGRAMS, getProgramById } from '../data/programs';
-import { getTasksForShift } from '../data/taskTemplates';
-import { calculateCompliance, getComplianceColor, getComplianceLabel } from '../utils/complianceUtils';
-import { formatTime, getShiftLabel, getShiftDateString } from '../utils/timeUtils';
-import { useTaskTimer } from '../hooks/useTaskTimer';
+import { useState, useEffect } from "react";
+import { useAuthStore } from "../store/authStore";
+import { useTaskStore } from "../store/taskStore";
+import { useAlertStore } from "../store/alertStore";
+import { PROGRAMS, getProgramById } from "../data/programs";
 import {
-  Activity, AlertTriangle, CheckCircle, Clock, Users,
-  TrendingUp, Eye, ChevronRight, Shield, Zap, XCircle
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+  calculateCompliance,
+  getComplianceColor,
+} from "../utils/complianceUtils";
+import { getShiftLabel, getShiftDateString } from "../utils/timeUtils";
+import { useTaskTimer } from "../hooks/useTaskTimer";
+import {
+  AlertTriangle,
+  CheckCircle,
+  TrendingUp,
+  ChevronRight,
+  Shield,
+  Zap,
+  XCircle,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function ProgramCard({ program, session, alertCount, onClick }) {
   const tasks = session?.tasks || [];
-  const completed = tasks.filter(t => t.status === 'completed' || t.status === 'late').length;
-  const missed = tasks.filter(t => t.status === 'missed').length;
-  const pending = tasks.find(t => t.status === 'pending');
-  const compliance = calculateCompliance(tasks.filter(t => t.status !== 'upcoming'));
+  const completed = tasks.filter(
+    (t) => t.status === "completed" || t.status === "late",
+  ).length;
+  const missed = tasks.filter((t) => t.status === "missed").length;
+  const pending = tasks.find((t) => t.status === "pending");
+  const compliance = calculateCompliance(
+    tasks.filter((t) => t.status !== "upcoming"),
+  );
   const compColor = getComplianceColor(compliance);
   const hasActivity = tasks.length > 0;
 
   const colorMap = {
-    teal: 'from-emerald-50 to-teal-50 border-emerald-200',
-    blue: 'from-blue-50 to-indigo-50 border-blue-200',
-    purple: 'from-purple-50 to-fuchsia-50 border-purple-200',
-    orange: 'from-orange-50 to-amber-50 border-orange-200',
-    amber: 'from-amber-50 to-yellow-50 border-amber-200',
-    green: 'from-green-50 to-emerald-50 border-green-200',
+    teal: "from-emerald-50 to-teal-50 border-emerald-200",
+    blue: "from-blue-50 to-indigo-50 border-blue-200",
+    purple: "from-purple-50 to-fuchsia-50 border-purple-200",
+    orange: "from-orange-50 to-amber-50 border-orange-200",
+    amber: "from-amber-50 to-yellow-50 border-amber-200",
+    green: "from-green-50 to-emerald-50 border-green-200",
   };
 
   const dotColor = {
-    teal: 'bg-emerald-500', blue: 'bg-milieuBlue', purple: 'bg-purple-500',
-    orange: 'bg-orange-500', amber: 'bg-milieuYellow', green: 'bg-emerald-500',
+    teal: "bg-emerald-500",
+    blue: "bg-milieuBlue",
+    purple: "bg-purple-500",
+    orange: "bg-orange-500",
+    amber: "bg-milieuYellow",
+    green: "bg-emerald-500",
   };
 
   return (
@@ -44,15 +59,19 @@ function ProgramCard({ program, session, alertCount, onClick }) {
       <div className="flex items-start justify-between mb-4">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
-            <span className={`w-2 h-2 rounded-full ${hasActivity ? dotColor[program.color] : 'bg-slate-300'} ${hasActivity ? 'animate-pulse' : ''}`} />
-            <h3 className="text-slate-800 font-bold text-base">{program.name}</h3>
+            <span
+              className={`w-2 h-2 rounded-full ${hasActivity ? dotColor[program.color] : "bg-slate-300"} ${hasActivity ? "animate-pulse" : ""}`}
+            />
+            <h3 className="text-slate-800 font-bold text-base">
+              {program.name}
+            </h3>
           </div>
           <p className="text-slate-500 text-xs">{program.type}</p>
         </div>
         <div className="flex items-center gap-2">
           {alertCount > 0 && (
             <span className="bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold px-2 py-0.5 rounded-lg shadow-sm">
-              {alertCount} alert{alertCount > 1 ? 's' : ''}
+              {alertCount} alert{alertCount > 1 ? "s" : ""}
             </span>
           )}
           <ChevronRight size={16} className="text-slate-500" />
@@ -64,8 +83,12 @@ function ProgramCard({ program, session, alertCount, onClick }) {
           {/* Progress */}
           <div className="mb-3">
             <div className="flex justify-between text-xs mb-1">
-              <span className="text-slate-600">{completed}/{tasks.length} 30 mins tasks</span>
-              <span className={`font-semibold text-${compColor}-600`}>{compliance}% compliance</span>
+              <span className="text-slate-600">
+                {completed}/{tasks.length} 30 mins tasks
+              </span>
+              <span className={`font-semibold text-${compColor}-600`}>
+                {compliance}% compliance
+              </span>
             </div>
             <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden shadow-inner">
               <div
@@ -78,21 +101,38 @@ function ProgramCard({ program, session, alertCount, onClick }) {
           {/* Current task */}
           {pending && (
             <div className="bg-white/50 rounded-lg px-3 py-2 mb-3 border border-slate-200/50">
-              <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">Active Now</p>
-              <p className="text-slate-800 text-xs font-medium truncate">{pending.title}</p>
+              <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">
+                Active Now
+              </p>
+              <p className="text-slate-800 text-xs font-medium truncate">
+                {pending.title}
+              </p>
             </div>
           )}
 
           {/* Mini stats */}
           <div className="grid grid-cols-3 gap-2 text-center bg-white/40 p-2 rounded-xl">
-            <div><p className="text-emerald-600 font-bold text-sm">{completed}</p><p className="text-[10px] text-slate-600">Done</p></div>
-            <div><p className="text-amber-600 font-bold text-sm">{tasks.filter(t => t.status === 'late').length}</p><p className="text-[10px] text-slate-600">Late</p></div>
-            <div><p className="text-rose-600 font-bold text-sm">{missed}</p><p className="text-[10px] text-slate-600">Missed</p></div>
+            <div>
+              <p className="text-emerald-600 font-bold text-sm">{completed}</p>
+              <p className="text-[10px] text-slate-600">Done</p>
+            </div>
+            <div>
+              <p className="text-amber-600 font-bold text-sm">
+                {tasks.filter((t) => t.status === "late").length}
+              </p>
+              <p className="text-[10px] text-slate-600">Late</p>
+            </div>
+            <div>
+              <p className="text-rose-600 font-bold text-sm">{missed}</p>
+              <p className="text-[10px] text-slate-600">Missed</p>
+            </div>
           </div>
         </>
       ) : (
         <div className="text-center py-3">
-          <p className="text-slate-500 text-xs">No active shift · Tap to view schedule</p>
+          <p className="text-slate-500 text-xs">
+            No active shift · Tap to view schedule
+          </p>
         </div>
       )}
     </button>
@@ -103,7 +143,7 @@ export default function ManagerDashboard() {
   useTaskTimer();
   const { user } = useAuthStore();
   const { initSession } = useTaskStore();
-  const sessions = useTaskStore(state => state.sessions);
+  const sessions = useTaskStore((state) => state.sessions);
   const { alerts } = useAlertStore();
   const navigate = useNavigate();
   const [, forceUpdate] = useState(0);
@@ -111,15 +151,24 @@ export default function ManagerDashboard() {
   useEffect(() => {
     // Seed demo sessions for all programs so manager can see activity
     const hour = new Date().getHours();
-    const shift = hour >= 7 && hour < 15 ? 'day' : hour >= 15 && hour < 23 ? 'evening' : 'night';
-    PROGRAMS.forEach(p => initSession(p.id, shift, 'demo-staff'));
-    const t = setInterval(() => forceUpdate(n => n + 1), 60000);
+    const shift =
+      hour >= 7 && hour < 15
+        ? "day"
+        : hour >= 15 && hour < 23
+          ? "evening"
+          : "night";
+    PROGRAMS.forEach((p) => initSession(p.id, shift, "demo-staff"));
+    const t = setInterval(() => forceUpdate((n) => n + 1), 60000);
     return () => clearInterval(t);
   }, []);
 
-
   const hour = new Date().getHours();
-  const currentShift = hour >= 7 && hour < 15 ? 'day' : hour >= 15 && hour < 23 ? 'evening' : 'night';
+  const currentShift =
+    hour >= 7 && hour < 15
+      ? "day"
+      : hour >= 15 && hour < 23
+        ? "evening"
+        : "night";
 
   // Find session for a program
   const getSession = (programId) => {
@@ -128,16 +177,19 @@ export default function ManagerDashboard() {
   };
 
   // Global stats
-  const allTasks = Object.values(sessions).flatMap(s => s.tasks || []);
-  const totalCompleted = allTasks.filter(t => t.status === 'completed' || t.status === 'late').length;
-  const totalMissed = allTasks.filter(t => t.status === 'missed').length;
-  const totalTasks = allTasks.filter(t => t.status !== 'upcoming').length;
-  const globalCompliance = totalTasks > 0 ? Math.round((totalCompleted / totalTasks) * 100) : 0;
-  const unreadAlerts = alerts.filter(a => !a.read);
+  const allTasks = Object.values(sessions).flatMap((s) => s.tasks || []);
+  const totalCompleted = allTasks.filter(
+    (t) => t.status === "completed" || t.status === "late",
+  ).length;
+  const totalMissed = allTasks.filter((t) => t.status === "missed").length;
+  const totalTasks = allTasks.filter((t) => t.status !== "upcoming").length;
+  const globalCompliance =
+    totalTasks > 0 ? Math.round((totalCompleted / totalTasks) * 100) : 0;
+  const unreadAlerts = alerts.filter((a) => !a.read);
   const recentAlerts = alerts.slice(0, 5);
 
   const managedPrograms = user?.programIds
-    ? PROGRAMS.filter(p => user.programIds.includes(p.id))
+    ? PROGRAMS.filter((p) => user.programIds.includes(p.id))
     : PROGRAMS;
 
   return (
@@ -156,7 +208,11 @@ export default function ManagerDashboard() {
         <div className="text-right">
           <p className="text-slate-500 text-xs">Today</p>
           <p className="text-slate-800 text-sm font-medium">
-            {new Date().toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })}
+            {new Date().toLocaleDateString("en-CA", {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+            })}
           </p>
         </div>
       </div>
@@ -164,15 +220,44 @@ export default function ManagerDashboard() {
       {/* Global stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Global Compliance', value: `${globalCompliance}%`, icon: TrendingUp, color: globalCompliance >= 80 ? 'emerald' : 'amber', sub: 'All programs today' },
-          { label: '30 Mins Tasks Done', value: totalCompleted, icon: CheckCircle, color: 'emerald', sub: `of ${totalTasks} due` },
-          { label: '30 Mins Tasks Missed', value: totalMissed, icon: XCircle, color: 'rose', sub: 'Needs attention' },
-          { label: 'Active Alerts', value: unreadAlerts.length, icon: AlertTriangle, color: 'amber', sub: 'Unreviewed' },
+          {
+            label: "Global Compliance",
+            value: `${globalCompliance}%`,
+            icon: TrendingUp,
+            color: globalCompliance >= 80 ? "emerald" : "amber",
+            sub: "All programs today",
+          },
+          {
+            label: "30 Mins Tasks Done",
+            value: totalCompleted,
+            icon: CheckCircle,
+            color: "emerald",
+            sub: `of ${totalTasks} due`,
+          },
+          {
+            label: "30 Mins Tasks Missed",
+            value: totalMissed,
+            icon: XCircle,
+            color: "rose",
+            sub: "Needs attention",
+          },
+          {
+            label: "Active Alerts",
+            value: unreadAlerts.length,
+            icon: AlertTriangle,
+            color: "amber",
+            sub: "Unreviewed",
+          },
         ].map(({ label, value, icon: Icon, color, sub }) => (
-          <div key={label} className={`glass-card p-4 border-${color}-200 bg-${color}-50/30`}>
+          <div
+            key={label}
+            className={`glass-card p-4 border-${color}-200 bg-${color}-50/30`}
+          >
             <div className="flex items-center justify-between mb-2">
               <p className="text-slate-600 text-xs font-medium">{label}</p>
-              <div className={`w-8 h-8 bg-${color}-100 rounded-lg flex items-center justify-center`}>
+              <div
+                className={`w-8 h-8 bg-${color}-100 rounded-lg flex items-center justify-center`}
+              >
                 <Icon size={15} className={`text-${color}-600`} />
               </div>
             </div>
@@ -189,17 +274,23 @@ export default function ManagerDashboard() {
             <h2 className="text-slate-500 text-sm font-semibold uppercase tracking-wider">
               Programs ({managedPrograms.length})
             </h2>
-            <button onClick={() => navigate('/programs')} className="text-milieuBlue text-xs hover:text-blue-600 flex items-center gap-1 font-medium">
+            <button
+              onClick={() => navigate("/programs")}
+              className="text-milieuBlue text-xs hover:text-blue-600 flex items-center gap-1 font-medium"
+            >
               View All <ChevronRight size={12} />
             </button>
           </div>
           <div className="grid sm:grid-cols-2 gap-3">
-            {managedPrograms.map(program => (
+            {managedPrograms.map((program) => (
               <ProgramCard
                 key={program.id}
                 program={program}
                 session={getSession(program.id)}
-                alertCount={alerts.filter(a => a.programId === program.id && !a.read).length}
+                alertCount={
+                  alerts.filter((a) => a.programId === program.id && !a.read)
+                    .length
+                }
                 onClick={() => navigate(`/programs?p=${program.id}`)}
               />
             ))}
@@ -211,35 +302,71 @@ export default function ManagerDashboard() {
           <div className="flex items-center justify-between">
             <h2 className="text-slate-500 text-sm font-semibold uppercase tracking-wider flex items-center gap-2">
               <span className="relative flex h-2 w-2">
-                {unreadAlerts.length > 0 && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-milieuCoral opacity-75" />}
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${unreadAlerts.length > 0 ? 'bg-milieuCoral' : 'bg-slate-300'}`} />
+                {unreadAlerts.length > 0 && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-milieuCoral opacity-75" />
+                )}
+                <span
+                  className={`relative inline-flex rounded-full h-2 w-2 ${unreadAlerts.length > 0 ? "bg-milieuCoral" : "bg-slate-300"}`}
+                />
               </span>
               Live Alerts
             </h2>
-            <button onClick={() => navigate('/alerts')} className="text-milieuBlue text-xs hover:text-blue-600 font-medium">View All</button>
+            <button
+              onClick={() => navigate("/alerts")}
+              className="text-milieuBlue text-xs hover:text-blue-600 font-medium"
+            >
+              View All
+            </button>
           </div>
 
           {recentAlerts.length === 0 ? (
             <div className="glass-card p-6 text-center bg-emerald-50/50">
-              <CheckCircle size={28} className="text-emerald-500 mx-auto mb-2" />
-              <p className="text-emerald-700 text-sm font-medium">All clear! No alerts.</p>
+              <CheckCircle
+                size={28}
+                className="text-emerald-500 mx-auto mb-2"
+              />
+              <p className="text-emerald-700 text-sm font-medium">
+                All clear! No alerts.
+              </p>
             </div>
           ) : (
             <div className="space-y-2">
-              {recentAlerts.map(alert => (
-                <div key={alert.id} className={`glass-card p-3 border-l-4 ${alert.type === 'missed' ? 'border-l-rose-500 bg-rose-50/30' : alert.type === 'bulk-submit' ? 'border-l-amber-500 bg-amber-50/30' : 'border-l-blue-500 bg-blue-50/30'}`}>
+              {recentAlerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className={`glass-card p-3 border-l-4 ${alert.type === "missed" ? "border-l-rose-500 bg-rose-50/30" : alert.type === "bulk-submit" ? "border-l-amber-500 bg-amber-50/30" : "border-l-blue-500 bg-blue-50/30"}`}
+                >
                   <div className="flex items-start gap-2">
-                    <AlertTriangle size={14} className={alert.type === 'missed' ? 'text-rose-500 mt-0.5 flex-shrink-0' : 'text-amber-500 mt-0.5 flex-shrink-0'} />
+                    <AlertTriangle
+                      size={14}
+                      className={
+                        alert.type === "missed"
+                          ? "text-rose-500 mt-0.5 flex-shrink-0"
+                          : "text-amber-500 mt-0.5 flex-shrink-0"
+                      }
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1 mb-0.5">
-                        <span className={`text-[10px] font-bold uppercase ${alert.type === 'missed' ? 'text-rose-600' : 'text-amber-600'}`}>
-                          {alert.type === 'bulk-submit' ? 'Bulk Submit' : alert.type}
+                        <span
+                          className={`text-[10px] font-bold uppercase ${alert.type === "missed" ? "text-rose-600" : "text-amber-600"}`}
+                        >
+                          {alert.type === "bulk-submit"
+                            ? "Bulk Submit"
+                            : alert.type}
                         </span>
-                        {!alert.read && <span className="w-1.5 h-1.5 rounded-full bg-milieuBlue flex-shrink-0" />}
+                        {!alert.read && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-milieuBlue flex-shrink-0" />
+                        )}
                       </div>
-                      <p className="text-slate-800 text-xs font-medium truncate">{alert.taskTitle || 'System Alert'}</p>
+                      <p className="text-slate-800 text-xs font-medium truncate">
+                        {alert.taskTitle || "System Alert"}
+                      </p>
                       <p className="text-slate-500 text-[10px] mt-0.5">
-                        {getProgramById(alert.programId)?.name || 'Unknown'} · {new Date(alert.createdAt).toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' })}
+                        {getProgramById(alert.programId)?.name || "Unknown"} ·{" "}
+                        {new Date(alert.createdAt).toLocaleTimeString("en-CA", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </p>
                     </div>
                   </div>
@@ -255,14 +382,30 @@ export default function ManagerDashboard() {
             </p>
             <div className="space-y-2">
               {[
-                { color: 'rose', label: 'Missed', desc: 'Task window expired, not completed' },
-                { color: 'amber', label: 'Bulk Submit', desc: '3+ tasks completed in under 5 min' },
-                { color: 'blue', label: 'Late', desc: 'Completed after scheduled window' },
+                {
+                  color: "rose",
+                  label: "Missed",
+                  desc: "Task window expired, not completed",
+                },
+                {
+                  color: "amber",
+                  label: "Bulk Submit",
+                  desc: "3+ tasks completed in under 5 min",
+                },
+                {
+                  color: "blue",
+                  label: "Late",
+                  desc: "Completed after scheduled window",
+                },
               ].map(({ color, label, desc }) => (
                 <div key={label} className="flex items-start gap-2">
-                  <span className={`w-2 h-2 rounded-full bg-${color}-500 mt-1 flex-shrink-0`} />
+                  <span
+                    className={`w-2 h-2 rounded-full bg-${color}-500 mt-1 flex-shrink-0`}
+                  />
                   <div>
-                    <p className="text-slate-700 text-xs font-medium">{label}</p>
+                    <p className="text-slate-700 text-xs font-medium">
+                      {label}
+                    </p>
                     <p className="text-slate-500 text-[10px]">{desc}</p>
                   </div>
                 </div>

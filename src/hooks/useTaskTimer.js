@@ -54,7 +54,10 @@ export const useTaskTimer = () => {
               staffId: task.staffId,
               message: `Task "${task.title}" was not completed during the scheduled window (${task.startTime}–${task.endTime}).`,
             });
-            if (user?.role === 'manager') {
+            // Only show a distracting toast popup if it was missed recently (within the last 2 minutes)
+            // This prevents a barrage of toasts when a manager logs in and old missed tasks are processed.
+            const msSinceMissed = now - windowEnd;
+            if (user?.role === 'manager' && msSinceMissed < 2 * 60 * 1000) {
               toast.error(`🚨 MISSED: "${task.title}" overdue!`, { duration: 8000 });
             }
           }

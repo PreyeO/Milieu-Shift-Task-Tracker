@@ -1,39 +1,63 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { PROGRAMS } from '../data/programs';
-import { TASK_TEMPLATES } from '../data/taskTemplates';
-import { useTaskStore } from '../store/taskStore';
-import { getShiftDateString, formatTimeSlot } from '../utils/timeUtils';
-import { calculateCompliance } from '../utils/complianceUtils';
-import { 
-  ClipboardList, Sun, Sunset, Moon, Clock, Users, 
-  MapPin, MessageSquare, Search, Activity, ChevronDown 
-} from 'lucide-react';
-import Badge from '../components/ui/Badge';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { PROGRAMS } from "../data/programs";
+import { TASK_TEMPLATES } from "../data/taskTemplates";
+import { useTaskStore } from "../store/taskStore";
+import { getShiftDateString, formatTimeSlot } from "../utils/timeUtils";
+import { calculateCompliance } from "../utils/complianceUtils";
+import {
+  ClipboardList,
+  Sun,
+  Sunset,
+  Moon,
+  Clock,
+  Users,
+  MapPin,
+  MessageSquare,
+  Activity,
+} from "lucide-react";
+import Badge from "../components/ui/Badge";
 
 const SHIFT_TABS = [
-  { key: 'day', label: 'Morning Shift', icon: Sun, time: '7:00 AM – 3:00 PM' },
-  { key: 'evening', label: 'Day Shift', icon: Sunset, time: '3:00 PM – 11:00 PM' },
-  { key: 'night', label: 'Grave yard Shift', icon: Moon, time: '11:00 PM – 7:00 AM' },
+  { key: "day", label: "Morning Shift", icon: Sun, time: "7:00 AM – 3:00 PM" },
+  {
+    key: "evening",
+    label: "Day Shift",
+    icon: Sunset,
+    time: "3:00 PM – 11:00 PM",
+  },
+  {
+    key: "night",
+    label: "Grave yard Shift",
+    icon: Moon,
+    time: "11:00 PM – 7:00 AM",
+  },
 ];
 
 function TaskRow({ task, sessionTask }) {
-  const status = sessionTask?.status || 'upcoming';
+  const status = sessionTask?.status || "upcoming";
   const completedAt = sessionTask?.completedAt;
   return (
-    <div className={`flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg border transition-colors ${
-      status === 'completed' ? 'border-emerald-200 bg-emerald-50' :
-      status === 'late' ? 'border-amber-200 bg-amber-50' :
-      status === 'missed' ? 'border-rose-200 bg-rose-50' :
-      status === 'pending' ? 'border-blue-200 bg-blue-50' :
-      'border-slate-100 bg-slate-50'
-    }`}>
+    <div
+      className={`flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg border transition-colors ${
+        status === "completed"
+          ? "border-emerald-200 bg-emerald-50"
+          : status === "late"
+            ? "border-amber-200 bg-amber-50"
+            : status === "missed"
+              ? "border-rose-200 bg-rose-50"
+              : status === "pending"
+                ? "border-blue-200 bg-blue-50"
+                : "border-slate-100 bg-slate-50"
+      }`}
+    >
       {/* Top Meta row on mobile (Time + Badge) */}
       <div className="flex items-center justify-between sm:block flex-shrink-0 w-full sm:w-auto">
         <div className="text-slate-500 text-xs font-mono sm:w-24 pt-0.5 flex items-center gap-1.5">
           <Clock size={12} className="sm:hidden text-slate-400" />
-          <span>{formatTimeSlot(task.startTime)} – {formatTimeSlot(task.endTime)}</span>
+          <span>
+            {formatTimeSlot(task.startTime)} – {formatTimeSlot(task.endTime)}
+          </span>
         </div>
         <Badge status={status} className="sm:hidden text-[10px]" />
       </div>
@@ -41,14 +65,28 @@ function TaskRow({ task, sessionTask }) {
       {/* Middle Details */}
       <div className="flex-1 min-w-0">
         <p className="text-slate-800 text-sm font-medium">{task.title}</p>
-        <p className="text-slate-600 text-xs mt-0.5 leading-relaxed">{task.description}</p>
+        <p className="text-slate-600 text-xs mt-0.5 leading-relaxed">
+          {task.description}
+        </p>
         {completedAt && (
           <div className="mt-1">
             <p className="text-emerald-600 text-[10px] flex items-center flex-wrap gap-1">
-              <span>✓ Signed off at {new Date(completedAt).toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' })}</span>
-              {sessionTask?.completedBy ? ` by ` : ''}
-              {sessionTask?.completedBy && <span className="font-semibold text-slate-700 bg-slate-200 px-1.5 py-0.5 rounded text-[9px]">{sessionTask.completedBy}</span>}
-              {status === 'late' && <span className="text-amber-600 font-semibold">· LATE</span>}
+              <span>
+                ✓ Signed off at{" "}
+                {new Date(completedAt).toLocaleTimeString("en-CA", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+              {sessionTask?.completedBy ? ` by ` : ""}
+              {sessionTask?.completedBy && (
+                <span className="font-semibold text-slate-700 bg-slate-200 px-1.5 py-0.5 rounded text-[9px]">
+                  {sessionTask.completedBy}
+                </span>
+              )}
+              {status === "late" && (
+                <span className="text-amber-600 font-semibold">· LATE</span>
+              )}
             </p>
             {sessionTask?.comment && (
               <p className="text-slate-500 text-[10px] flex items-start gap-1 mt-1">
@@ -61,58 +99,114 @@ function TaskRow({ task, sessionTask }) {
       </div>
 
       {/* Badge (Hidden on mobile, visible on tablet/desktop) */}
-      <Badge status={status} className="hidden sm:inline-flex flex-shrink-0 text-[10px]" />
+      <Badge
+        status={status}
+        className="hidden sm:inline-flex flex-shrink-0 text-[10px]"
+      />
     </div>
   );
 }
 
 export default function ProgramsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [shift, setShift] = useState('day');
+  const [shift, setShift] = useState("day");
   const { initSession } = useTaskStore();
-  const sessions = useTaskStore(state => state.sessions);
+  const sessions = useTaskStore((state) => state.sessions);
 
   // Initialize demo shifts for preview on mount
   useEffect(() => {
     const hour = new Date().getHours();
-    const currentShift = hour >= 7 && hour < 15 ? 'day' : hour >= 15 && hour < 23 ? 'evening' : 'night';
-    PROGRAMS.forEach(p => initSession(p.id, currentShift, 'demo-staff'));
+    const currentShift =
+      hour >= 7 && hour < 15
+        ? "day"
+        : hour >= 15 && hour < 23
+          ? "evening"
+          : "night";
+    PROGRAMS.forEach((p) => initSession(p.id, currentShift, "demo-staff"));
   }, []);
 
-  const focusId = searchParams.get('p');
-  
-  // Determine which program is currently active
-  const activeProgramId = focusId && PROGRAMS.some(p => p.id === focusId) 
-    ? focusId 
-    : PROGRAMS[0]?.id;
+  const focusId = searchParams.get("p");
 
-  const activeProgram = PROGRAMS.find(p => p.id === activeProgramId);
+  // Determine which program is currently active
+  const activeProgramId =
+    focusId && PROGRAMS.some((p) => p.id === focusId)
+      ? focusId
+      : PROGRAMS[0]?.id;
+
+  const activeProgram = PROGRAMS.find((p) => p.id === activeProgramId);
 
   // Get active shift calculations for compliance
   const hour = new Date().getHours();
-  const currentShift = hour >= 7 && hour < 15 ? 'day' : hour >= 15 && hour < 23 ? 'evening' : 'night';
-  const sessionKey = activeProgram ? `${activeProgram.id}-${currentShift}-${getShiftDateString()}` : '';
+  const currentShift =
+    hour >= 7 && hour < 15
+      ? "day"
+      : hour >= 15 && hour < 23
+        ? "evening"
+        : "night";
+  const sessionKey = activeProgram
+    ? `${activeProgram.id}-${currentShift}-${getShiftDateString()}`
+    : "";
   const activeSession = sessions[sessionKey];
   const sessionTasks = activeSession?.tasks || [];
-  
-  const completedTasks = sessionTasks.filter(t => t.status === 'completed' || t.status === 'late').length;
+
+  const completedTasks = sessionTasks.filter(
+    (t) => t.status === "completed" || t.status === "late",
+  ).length;
   const totalTasks = sessionTasks.length;
-  const pendingTasks = sessionTasks.filter(t => t.status === 'pending').length;
-  const compliance = calculateCompliance(sessionTasks.filter(t => t.status !== 'upcoming'));
+  const pendingTasks = sessionTasks.filter(
+    (t) => t.status === "pending",
+  ).length;
+  const compliance = calculateCompliance(
+    sessionTasks.filter((t) => t.status !== "upcoming"),
+  );
 
   // Get selected shift routine tasks
-  const allTemplates = activeProgram ? (TASK_TEMPLATES[activeProgram.id]?.[shift] || []) : [];
+  const allTemplates = activeProgram
+    ? TASK_TEMPLATES[activeProgram.id]?.[shift] || []
+    : [];
 
   // Dynamic HSL branding for the compliance indicator card
   const colorThemes = {
-    teal: { border: 'border-emerald-200', bg: 'bg-emerald-50/20', text: 'text-emerald-700', progress: 'bg-emerald-500' },
-    blue: { border: 'border-blue-200', bg: 'bg-blue-50/20', text: 'text-blue-700', progress: 'bg-milieuBlue' },
-    purple: { border: 'border-purple-200', bg: 'bg-purple-50/20', text: 'text-purple-700', progress: 'bg-purple-500' },
-    orange: { border: 'border-orange-200', bg: 'bg-orange-50/20', text: 'text-orange-700', progress: 'bg-orange-500' },
-    amber: { border: 'border-amber-200', bg: 'bg-amber-50/20', text: 'text-amber-700', progress: 'bg-milieuYellow' },
-    green: { border: 'border-emerald-200', bg: 'bg-emerald-50/20', text: 'text-emerald-700', progress: 'bg-emerald-500' },
+    teal: {
+      border: "border-emerald-200",
+      bg: "bg-emerald-50/20",
+      text: "text-emerald-700",
+      progress: "bg-emerald-500",
+    },
+    blue: {
+      border: "border-blue-200",
+      bg: "bg-blue-50/20",
+      text: "text-blue-700",
+      progress: "bg-milieuBlue",
+    },
+    purple: {
+      border: "border-purple-200",
+      bg: "bg-purple-50/20",
+      text: "text-purple-700",
+      progress: "bg-purple-500",
+    },
+    orange: {
+      border: "border-orange-200",
+      bg: "bg-orange-50/20",
+      text: "text-orange-700",
+      progress: "bg-orange-500",
+    },
+    amber: {
+      border: "border-amber-200",
+      bg: "bg-amber-50/20",
+      text: "text-amber-700",
+      progress: "bg-milieuYellow",
+    },
+    green: {
+      border: "border-emerald-200",
+      bg: "bg-emerald-50/20",
+      text: "text-emerald-700",
+      progress: "bg-emerald-500",
+    },
   };
-  const theme = activeProgram ? (colorThemes[activeProgram.color] || colorThemes.teal) : colorThemes.teal;
+  const theme = activeProgram
+    ? colorThemes[activeProgram.color] || colorThemes.teal
+    : colorThemes.teal;
 
   return (
     <div className="space-y-6">
@@ -123,7 +217,9 @@ export default function ProgramsPage() {
             <ClipboardList size={22} className="text-milieuBlue" />
             Programs
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">30 Mins Task schedules for all residential homes</p>
+          <p className="text-slate-500 text-sm mt-0.5">
+            30 Mins Task schedules for all residential homes
+          </p>
         </div>
       </div>
 
@@ -131,14 +227,18 @@ export default function ProgramsPage() {
       <div className="glass-card p-3 sm:p-4">
         {/* Residential Home Selector */}
         <div>
-          <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1.5">Residential Home / Program</label>
-          <select 
+          <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1.5">
+            Residential Home / Program
+          </label>
+          <select
             className="input-field py-1.5 px-2.5 text-xs text-slate-800"
-            value={activeProgramId || ''}
+            value={activeProgramId || ""}
             onChange={(e) => setSearchParams({ p: e.target.value })}
           >
-            {PROGRAMS.map(p => (
-              <option key={p.id} value={p.id}>{p.name} — {p.type}</option>
+            {PROGRAMS.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} — {p.type}
+              </option>
             ))}
           </select>
         </div>
@@ -147,28 +247,44 @@ export default function ProgramsPage() {
       {activeProgram ? (
         <div className="space-y-4">
           {/* Premium Compliance Dashboard Card */}
-          <div className={`glass-card p-4 sm:p-5 border-l-4 ${theme.border} ${theme.bg} transition-all`}>
+          <div
+            className={`glass-card p-4 sm:p-5 border-l-4 ${theme.border} ${theme.bg} transition-all`}
+          >
             <div className="flex flex-col md:flex-row md:items-center gap-6 justify-between">
               {/* Left Column: Compliance circle & metadata */}
               <div className="flex items-center gap-4">
                 {/* Big percentage indicator */}
                 <div className="relative flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-slate-200/50 flex-shrink-0 bg-white shadow-xs">
                   <div className="text-center">
-                    <span className={`text-xl sm:text-2xl font-black ${theme.text}`}>
-                      {totalTasks > 0 ? `${compliance}%` : '—'}
+                    <span
+                      className={`text-xl sm:text-2xl font-black ${theme.text}`}
+                    >
+                      {totalTasks > 0 ? `${compliance}%` : "—"}
                     </span>
-                    <p className="text-[8px] sm:text-[9px] uppercase tracking-wider text-slate-400 font-bold leading-none">Comp.</p>
+                    <p className="text-[8px] sm:text-[9px] uppercase tracking-wider text-slate-400 font-bold leading-none">
+                      Comp.
+                    </p>
                   </div>
                 </div>
 
                 {/* Quick Metadata */}
                 <div>
-                  <h2 className="text-slate-800 text-lg font-black leading-tight">{activeProgram.name}</h2>
-                  <p className="text-slate-500 text-xs mt-0.5">{activeProgram.type}</p>
+                  <h2 className="text-slate-800 text-lg font-black leading-tight">
+                    {activeProgram.name}
+                  </h2>
+                  <p className="text-slate-500 text-xs mt-0.5">
+                    {activeProgram.type}
+                  </p>
                   <p className="text-slate-400 text-[10px] mt-1 flex items-center gap-1.5 flex-wrap">
-                    <span className="flex items-center gap-0.5"><MapPin size={10} />{activeProgram.location}</span>
+                    <span className="flex items-center gap-0.5">
+                      <MapPin size={10} />
+                      {activeProgram.location}
+                    </span>
                     <span>•</span>
-                    <span className="flex items-center gap-0.5"><Users size={10} />Capacity: {activeProgram.capacity}</span>
+                    <span className="flex items-center gap-0.5">
+                      <Users size={10} />
+                      Capacity: {activeProgram.capacity}
+                    </span>
                   </p>
                   <p className="text-slate-500 text-[9px] mt-1.5 font-semibold flex items-center gap-1 flex-wrap">
                     <span>📞 {activeProgram.phoneNumber}</span>
@@ -182,26 +298,36 @@ export default function ProgramsPage() {
               <div className="flex-1 min-w-0 max-w-sm sm:px-4">
                 <div className="flex items-center justify-between text-xs font-semibold mb-1 text-slate-700">
                   <span>Shift Duties Sign-off</span>
-                  <span>{completedTasks} / {totalTasks} Completed</span>
+                  <span>
+                    {completedTasks} / {totalTasks} Completed
+                  </span>
                 </div>
                 <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
-                  <div 
+                  <div
                     className={`h-full ${theme.progress} transition-all duration-500`}
-                    style={{ width: `${totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0}%` }}
+                    style={{
+                      width: `${totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0}%`,
+                    }}
                   />
                 </div>
                 <p className="text-[10px] text-slate-500 mt-1">
-                  {pendingTasks > 0 ? `⚠ ${pendingTasks} tasks are pending verification today.` : '✓ All verified duties are signed off and current.'}
+                  {pendingTasks > 0
+                    ? `⚠ ${pendingTasks} tasks are pending verification today.`
+                    : "✓ All verified duties are signed off and current."}
                 </p>
               </div>
 
               {/* Right Column: Shift active status indicator */}
               <div className="flex flex-col sm:items-end gap-1 border-t border-slate-200/40 md:border-t-0 pt-3 md:pt-0">
-                <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Shift Status</span>
+                <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
+                  Shift Status
+                </span>
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${activeSession ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                  <div
+                    className={`w-2 h-2 rounded-full ${activeSession ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`}
+                  />
                   <span className="text-slate-800 text-xs font-semibold">
-                    {activeSession ? `Active Shift` : 'No active shift today'}
+                    {activeSession ? `Active Shift` : "No active shift today"}
                   </span>
                 </div>
                 {activeSession ? (
@@ -225,24 +351,27 @@ export default function ProgramsPage() {
                 <ClipboardList size={16} className="text-milieuBlue" />
                 30 Mins Tasks ({allTemplates.length})
               </h3>
-              
+
               {/* Shift selector tabs */}
               <div className="flex gap-1.5">
                 {SHIFT_TABS.map(({ key, label, icon: Icon }) => {
-                  const shiftTasks = TASK_TEMPLATES[activeProgram.id]?.[key] || [];
+                  const shiftTasks =
+                    TASK_TEMPLATES[activeProgram.id]?.[key] || [];
                   return (
                     <button
                       key={key}
                       onClick={() => setShift(key)}
                       className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-semibold whitespace-nowrap transition-all ${
-                        shift === key 
-                          ? 'bg-blue-50 text-milieuBlue border border-blue-200 shadow-xs' 
-                          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                        shift === key
+                          ? "bg-blue-50 text-milieuBlue border border-blue-200 shadow-xs"
+                          : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
                       }`}
                     >
                       <Icon size={11} />
-                      <span>{label.replace(' Shift', '')}</span>
-                      <span className="text-slate-400">({shiftTasks.length})</span>
+                      <span>{label.replace(" Shift", "")}</span>
+                      <span className="text-slate-400">
+                        ({shiftTasks.length})
+                      </span>
                     </button>
                   );
                 })}
@@ -253,7 +382,10 @@ export default function ProgramsPage() {
             <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
               <Clock size={12} className="text-slate-400" />
               <p className="text-[10px] sm:text-xs text-slate-600 font-medium">
-                <strong>{SHIFT_TABS.find(t => t.key === shift)?.label}:</strong> {SHIFT_TABS.find(t => t.key === shift)?.time}
+                <strong>
+                  {SHIFT_TABS.find((t) => t.key === shift)?.label}:
+                </strong>{" "}
+                {SHIFT_TABS.find((t) => t.key === shift)?.time}
               </p>
             </div>
 
@@ -264,9 +396,17 @@ export default function ProgramsPage() {
               </p>
             ) : (
               <div className="space-y-2">
-                {allTemplates.map(task => {
-                  const sessionTask = sessionTasks.find(t => t.id === task.id);
-                  return <TaskRow key={task.id} task={task} sessionTask={sessionTask} />;
+                {allTemplates.map((task) => {
+                  const sessionTask = sessionTasks.find(
+                    (t) => t.id === task.id,
+                  );
+                  return (
+                    <TaskRow
+                      key={task.id}
+                      task={task}
+                      sessionTask={sessionTask}
+                    />
+                  );
                 })}
               </div>
             )}
