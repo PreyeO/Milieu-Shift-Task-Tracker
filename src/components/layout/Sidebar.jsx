@@ -83,7 +83,7 @@ export default function Sidebar() {
             <span className="flex-1">{label}</span>
             {badge > 0 && (
               <span className="bg-milieuCoral text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {badge > 9 ? "9+" : badge}
+                {badge}
               </span>
             )}
           </NavLink>
