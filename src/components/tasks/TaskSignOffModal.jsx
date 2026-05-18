@@ -39,7 +39,7 @@ export default function TaskSignOffModal({ task, isOpen, onClose }) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Sign Off Task" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Sign Off 30 Mins Task" size="md">
       <div className="space-y-5">
         {/* Task info */}
         <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
@@ -113,7 +113,7 @@ export default function TaskSignOffModal({ task, isOpen, onClose }) {
                 ) : (
                   <CheckCircle size={16} />
                 )}
-                {confirming ? 'Saving...' : isPast ? 'Sign Off (Late)' : 'Sign Off Task'}
+                {confirming ? 'Saving...' : isPast ? 'Sign Off (Late)' : 'Sign Off 30 Mins Task'}
               </button>
             </div>
           </>

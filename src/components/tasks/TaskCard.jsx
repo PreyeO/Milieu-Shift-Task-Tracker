@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Badge from '../ui/Badge';
-import { formatTime, getWindowProgress } from '../../utils/timeUtils';
+import { formatTime, getWindowProgress, formatTimeSlot } from '../../utils/timeUtils';
 import { Clock, CheckCircle, ChevronRight, MessageSquare } from 'lucide-react';
 
 const STATUS_DOT = {
@@ -51,7 +51,7 @@ export default function TaskCard({ task, onClick, showProgram = false }) {
 
           <p className="text-slate-500 text-xs mb-2 flex items-center gap-1">
             <Clock size={10} />
-            {task.startTime} – {task.endTime}
+            {formatTimeSlot(task.startTime)} – {formatTimeSlot(task.endTime)}
           </p>
 
           {/* Progress bar for active tasks */}

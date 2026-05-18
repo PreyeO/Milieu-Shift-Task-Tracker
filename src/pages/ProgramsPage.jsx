@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { PROGRAMS } from '../data/programs';
 import { TASK_TEMPLATES } from '../data/taskTemplates';
 import { useTaskStore } from '../store/taskStore';
-import { getShiftDateString } from '../utils/timeUtils';
+import { getShiftDateString, formatTimeSlot } from '../utils/timeUtils';
 import { calculateCompliance } from '../utils/complianceUtils';
 import { 
   ClipboardList, Sun, Sunset, Moon, Clock, Users, 
@@ -13,9 +13,9 @@ import Badge from '../components/ui/Badge';
 import toast from 'react-hot-toast';
 
 const SHIFT_TABS = [
-  { key: 'day', label: 'Day Shift', icon: Sun, time: '7:00 AM – 3:00 PM' },
-  { key: 'evening', label: 'Evening Shift', icon: Sunset, time: '3:00 PM – 11:00 PM' },
-  { key: 'night', label: 'Night Shift', icon: Moon, time: '11:00 PM – 7:00 AM' },
+  { key: 'day', label: 'Morning Shift', icon: Sun, time: '7:00 AM – 3:00 PM' },
+  { key: 'evening', label: 'Day Shift', icon: Sunset, time: '3:00 PM – 11:00 PM' },
+  { key: 'night', label: 'Grave yard Shift', icon: Moon, time: '11:00 PM – 7:00 AM' },
 ];
 
 function TaskRow({ task, sessionTask }) {
@@ -33,7 +33,7 @@ function TaskRow({ task, sessionTask }) {
       <div className="flex items-center justify-between sm:block flex-shrink-0 w-full sm:w-auto">
         <div className="text-slate-500 text-xs font-mono sm:w-24 pt-0.5 flex items-center gap-1.5">
           <Clock size={12} className="sm:hidden text-slate-400" />
-          <span>{task.startTime}–{task.endTime}</span>
+          <span>{formatTimeSlot(task.startTime)} – {formatTimeSlot(task.endTime)}</span>
         </div>
         <Badge status={status} className="sm:hidden text-[10px]" />
       </div>
@@ -68,7 +68,6 @@ function TaskRow({ task, sessionTask }) {
 
 export default function ProgramsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [search, setSearch] = useState('');
   const [shift, setShift] = useState('day');
   const { initSession } = useTaskStore();
   const sessions = useTaskStore(state => state.sessions);
@@ -101,12 +100,8 @@ export default function ProgramsPage() {
   const pendingTasks = sessionTasks.filter(t => t.status === 'pending').length;
   const compliance = calculateCompliance(sessionTasks.filter(t => t.status !== 'upcoming'));
 
-  // Get selected shift routine tasks (filtered by user search)
+  // Get selected shift routine tasks
   const allTemplates = activeProgram ? (TASK_TEMPLATES[activeProgram.id]?.[shift] || []) : [];
-  const filteredTemplates = allTemplates.filter(t => 
-    t.title.toLowerCase().includes(search.toLowerCase()) ||
-    t.description.toLowerCase().includes(search.toLowerCase())
-  );
 
   // Dynamic HSL branding for the compliance indicator card
   const colorThemes = {
@@ -128,14 +123,14 @@ export default function ProgramsPage() {
             <ClipboardList size={22} className="text-milieuBlue" />
             Programs
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">Task schedules for all residential homes</p>
+          <p className="text-slate-500 text-sm mt-0.5">30 Mins Task schedules for all residential homes</p>
         </div>
       </div>
 
-      {/* Program Selector & Search Card */}
-      <div className="glass-card p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {/* Program Selector */}
+      <div className="glass-card p-3 sm:p-4">
         {/* Residential Home Selector */}
-        <div className="sm:col-span-2">
+        <div>
           <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1.5">Residential Home / Program</label>
           <select 
             className="input-field py-1.5 px-2.5 text-xs text-slate-800"
@@ -146,21 +141,6 @@ export default function ProgramsPage() {
               <option key={p.id} value={p.id}>{p.name} — {p.type}</option>
             ))}
           </select>
-        </div>
-
-        {/* Inline Search Bar */}
-        <div className="sm:col-span-1">
-          <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1.5">Filter Duties</label>
-          <div className="relative w-full">
-            <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search tasks..."
-              className="input-field pl-9 pr-4 py-1.5 w-full text-xs text-slate-800"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
         </div>
       </div>
 
@@ -221,7 +201,7 @@ export default function ProgramsPage() {
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${activeSession ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
                   <span className="text-slate-800 text-xs font-semibold">
-                    {activeSession ? `Active Shift (Sarah)` : 'No active shift today'}
+                    {activeSession ? `Active Shift` : 'No active shift today'}
                   </span>
                 </div>
                 {activeSession ? (
@@ -234,19 +214,6 @@ export default function ProgramsPage() {
                     Offline
                   </div>
                 )}
-                {activeProgram.phoneNumber && (
-                  <button 
-                    onClick={() => {
-                      toast.success(
-                        `💬 SMS Reminder sent to ${activeProgram.staffContact} (${activeProgram.phoneNumber}): "Hi ${activeProgram.staffContact.split(' ')[0]}, this is a reminder from management to check and sign off on today's active shift checklist for ${activeProgram.name}. — MilieuCare"`,
-                        { duration: 6000, icon: '💬' }
-                      );
-                    }}
-                    className="mt-2 inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-[9px] font-bold px-2 py-1 rounded-lg transition-all shadow-xs"
-                  >
-                    💬 Send SMS Reminder
-                  </button>
-                )}
               </div>
             </div>
           </div>
@@ -256,7 +223,7 @@ export default function ProgramsPage() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
               <h3 className="text-slate-800 font-extrabold text-sm sm:text-base flex items-center gap-1.5">
                 <ClipboardList size={16} className="text-milieuBlue" />
-                Routine Task Duties ({filteredTemplates.length})
+                30 Mins Tasks ({allTemplates.length})
               </h3>
               
               {/* Shift selector tabs */}
@@ -291,13 +258,13 @@ export default function ProgramsPage() {
             </div>
 
             {/* Checklist Tasks list */}
-            {filteredTemplates.length === 0 ? (
+            {allTemplates.length === 0 ? (
               <p className="text-slate-500 text-xs text-center py-8">
-                {search ? `No duties match search query "${search}"` : 'No duties scheduled for this shift.'}
+                No tasks scheduled for this shift.
               </p>
             ) : (
               <div className="space-y-2">
-                {filteredTemplates.map(task => {
+                {allTemplates.map(task => {
                   const sessionTask = sessionTasks.find(t => t.id === task.id);
                   return <TaskRow key={task.id} task={task} sessionTask={sessionTask} />;
                 })}

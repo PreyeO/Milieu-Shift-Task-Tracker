@@ -109,7 +109,7 @@ export default function ReportsPage() {
           </h1>
           <p className="text-slate-500 text-sm mt-0.5">Compliance analytics & shift history</p>
         </div>
-        <button className="btn-secondary flex items-center gap-2 text-sm">
+        <button onClick={() => window.print()} className="btn-secondary flex items-center gap-2 text-sm print:hidden">
           <Download size={15} />
           Export PDF
         </button>
@@ -143,7 +143,7 @@ export default function ReportsPage() {
       {/* KPI cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: 'Total Tasks', value: stats.total, color: 'text-slate-800' },
+          { label: 'Total 30 Mins Tasks', value: stats.total, color: 'text-slate-800' },
           { label: 'Completed', value: stats.completed, color: 'text-emerald-600' },
           { label: 'Late', value: stats.late, color: 'text-amber-600' },
           { label: 'Missed', value: stats.missed, color: 'text-rose-600' },
@@ -192,7 +192,7 @@ export default function ReportsPage() {
         <div className="glass-card p-5">
           <h3 className="text-slate-800 font-semibold mb-4 flex items-center gap-2">
             <CheckCircle size={16} className="text-milieuBlue" />
-            Task Status Breakdown
+            30 Mins Task Status Breakdown
           </h3>
           {pieData.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
@@ -206,7 +206,7 @@ export default function ReportsPage() {
             </ResponsiveContainer>
           ) : (
             <div className="h-[220px] flex items-center justify-center">
-              <p className="text-slate-500 text-sm">No completed tasks to display yet.</p>
+              <p className="text-slate-500 text-sm">No completed 30 mins tasks to display yet.</p>
             </div>
           )}
         </div>

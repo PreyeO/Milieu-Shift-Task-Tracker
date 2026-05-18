@@ -5,6 +5,13 @@ export const formatDate = (date) => format(new Date(date), 'MMM d, yyyy');
 export const formatDateTime = (date) => format(new Date(date), 'MMM d, h:mm a');
 export const formatTimeOnly = (date) => format(new Date(date), 'HH:mm');
 
+export const formatTimeSlot = (timeStr) => {
+  const [h, m] = timeStr.split(':').map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return format(d, 'h:mm a');
+};
+
 export const getShiftForTime = (hour) => {
   if (hour >= 7 && hour < 15) return 'day';
   if (hour >= 15 && hour < 23) return 'evening';
@@ -12,7 +19,7 @@ export const getShiftForTime = (hour) => {
 };
 
 export const getShiftLabel = (shift) => {
-  const labels = { day: '7:00 AM – 3:00 PM', evening: '3:00 PM – 11:00 PM', night: '11:00 PM – 7:00 AM' };
+  const labels = { day: 'Morning Shift (7:00 AM – 3:00 PM)', evening: 'Day Shift (3:00 PM – 11:00 PM)', night: 'Grave yard Shift (11:00 PM – 7:00 AM)' };
   return labels[shift] || shift;
 };
 

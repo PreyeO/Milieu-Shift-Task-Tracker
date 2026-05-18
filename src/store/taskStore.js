@@ -3,6 +3,9 @@ import { persist } from 'zustand/middleware';
 import { TASK_TEMPLATES } from '../data/taskTemplates';
 import { getTaskStatus, getShiftDateString } from '../utils/timeUtils';
 
+// Version key — bump this whenever task templates change to clear stale data
+const TEMPLATE_VERSION = 2;
+
 const buildSessionTasks = (programId, shift, staffId, templates) => {
   const shiftTemplates = templates[programId]?.[shift] || [];
   return shiftTemplates.map((t) => ({
@@ -23,21 +26,31 @@ export const useTaskStore = create(
   persist(
     (set, get) => ({
       sessions: {},      // { [programId-shift]: { tasks, startedAt, staffId } }
-      templates: TASK_TEMPLATES, // Persistent editable task templates
+      templates: TASK_TEMPLATES, // Always use fresh imported templates
+      templateVersion: TEMPLATE_VERSION,
       activeSessionKey: null,
 
       initSession: (programId, shift, staffId) => {
-        const key = `${programId}-${shift}-${getShiftDateString()}`;
-        const existing = get().sessions[key];
-        if (!existing) {
-          const tasks = buildSessionTasks(programId, shift, staffId, get().templates);
-          set((state) => ({
-            sessions: { ...state.sessions, [key]: { tasks, startedAt: new Date().toISOString(), staffId, programId, shift } },
-            activeSessionKey: key,
-          }));
-        } else {
-          set({ activeSessionKey: key });
+        // If template version changed, clear all old sessions
+        if (get().templateVersion !== TEMPLATE_VERSION) {
+          set({ sessions: {}, templates: TASK_TEMPLATES, templateVersion: TEMPLATE_VERSION });
         }
+        const key = `${programId}-${shift}-${getShiftDateString()}`;
+        
+        // If session already exists, just set it as active without overwriting tasks
+        const existingSession = get().sessions[key];
+        if (existingSession) {
+          set({ activeSessionKey: key });
+          return;
+        }
+
+        // Always rebuild the session from current templates to ensure fresh data
+        const tasks = buildSessionTasks(programId, shift, staffId, TASK_TEMPLATES);
+        set((state) => ({
+          sessions: { ...state.sessions, [key]: { tasks, startedAt: new Date().toISOString(), staffId, programId, shift } },
+          activeSessionKey: key,
+          templates: TASK_TEMPLATES,
+        }));
       },
 
       // Template CRUD operations

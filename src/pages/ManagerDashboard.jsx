@@ -64,7 +64,7 @@ function ProgramCard({ program, session, alertCount, onClick }) {
           {/* Progress */}
           <div className="mb-3">
             <div className="flex justify-between text-xs mb-1">
-              <span className="text-slate-600">{completed}/{tasks.length} tasks</span>
+              <span className="text-slate-600">{completed}/{tasks.length} 30 mins tasks</span>
               <span className={`font-semibold text-${compColor}-600`}>{compliance}% compliance</span>
             </div>
             <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden shadow-inner">
@@ -165,8 +165,8 @@ export default function ManagerDashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: 'Global Compliance', value: `${globalCompliance}%`, icon: TrendingUp, color: globalCompliance >= 80 ? 'emerald' : 'amber', sub: 'All programs today' },
-          { label: 'Tasks Completed', value: totalCompleted, icon: CheckCircle, color: 'emerald', sub: `of ${totalTasks} due` },
-          { label: 'Tasks Missed', value: totalMissed, icon: XCircle, color: 'rose', sub: 'Needs attention' },
+          { label: '30 Mins Tasks Done', value: totalCompleted, icon: CheckCircle, color: 'emerald', sub: `of ${totalTasks} due` },
+          { label: '30 Mins Tasks Missed', value: totalMissed, icon: XCircle, color: 'rose', sub: 'Needs attention' },
           { label: 'Active Alerts', value: unreadAlerts.length, icon: AlertTriangle, color: 'amber', sub: 'Unreviewed' },
         ].map(({ label, value, icon: Icon, color, sub }) => (
           <div key={label} className={`glass-card p-4 border-${color}-200 bg-${color}-50/30`}>

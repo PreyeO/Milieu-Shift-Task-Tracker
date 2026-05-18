@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { useTaskStore } from '../store/taskStore';
 import { PROGRAMS, getProgramById } from '../data/programs';
-import { getShiftDateString } from '../utils/timeUtils';
+import { TASK_TEMPLATES } from '../data/taskTemplates';
+import { getShiftDateString, formatTimeSlot } from '../utils/timeUtils';
 import { 
   CalendarRange, Plus, Edit2, Trash2, Clock, 
-  Sparkles, Layers, RefreshCw, Search, 
-  Check, X, FileText, AlertTriangle, Activity 
+  Check, X, FileText
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const SHIFTS = [
-  { key: 'day', label: 'Day Shift (7 AM – 3 PM)' },
-  { key: 'evening', label: 'Evening Shift (3 PM – 11 PM)' },
-  { key: 'night', label: 'Night Shift (11 PM – 7 AM)' },
+  { key: 'day', label: 'Morning Shift (7 AM – 3 PM)' },
+  { key: 'evening', label: 'Day Shift (3 PM – 11 PM)' },
+  { key: 'night', label: 'Grave yard Shift (11 PM – 7 AM)' },
 ];
 
 export default function SchedulesPage() {
@@ -27,10 +27,8 @@ export default function SchedulesPage() {
     deleteActiveTask 
   } = useTaskStore();
 
-  const [selectedProgram, setSelectedProgram] = useState(PROGRAMS[0]?.id || 'parkside-e');
+  const [selectedProgram, setSelectedProgram] = useState(PROGRAMS[0]?.id || 'hudson');
   const [selectedShift, setSelectedShift] = useState('day');
-  const [isEditingTemplates, setIsEditingTemplates] = useState(true); // true = Templates, false = Active Live Session
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Form Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,23 +38,11 @@ export default function SchedulesPage() {
   const [startTime, setStartTime] = useState('07:00');
   const [endTime, setEndTime] = useState('07:30');
 
-  // Determine active session key
-  const activeSessionKey = `${selectedProgram}-${selectedShift}-${getShiftDateString()}`;
-  const activeSession = sessions[activeSessionKey];
-
-  // Get tasks based on current mode
-  const rawTasks = isEditingTemplates 
-    ? (templates[selectedProgram]?.[selectedShift] || [])
-    : (activeSession?.tasks || []);
+  // Always use the fresh imported TASK_TEMPLATES for schedules management
+  const rawTasks = TASK_TEMPLATES[selectedProgram]?.[selectedShift] || [];
 
   // Sort tasks chronologically by start time
   const sortedTasks = [...rawTasks].sort((a, b) => a.startTime.localeCompare(b.startTime));
-
-  // Filter tasks by search query
-  const filteredTasks = sortedTasks.filter(t => 
-    t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const handleOpenCreateModal = () => {
     setEditingTask(null);
@@ -85,22 +71,12 @@ export default function SchedulesPage() {
 
     const taskData = { title, description, startTime, endTime };
 
-    if (isEditingTemplates) {
-      if (editingTask) {
-        updateTemplateTask(selectedProgram, selectedShift, editingTask.id, taskData);
-        toast.success('Routine task template updated!');
-      } else {
-        addTemplateTask(selectedProgram, selectedShift, taskData);
-        toast.success('New routine task template added!');
-      }
+    if (editingTask) {
+      updateTemplateTask(selectedProgram, selectedShift, editingTask.id, taskData);
+      toast.success('Routine task updated!');
     } else {
-      if (editingTask) {
-        updateActiveTask(activeSessionKey, editingTask.id, taskData);
-        toast.success('Live active task updated!');
-      } else {
-        addActiveTask(activeSessionKey, taskData);
-        toast.success('New active task injected to live shift!');
-      }
+      addTemplateTask(selectedProgram, selectedShift, taskData);
+      toast.success('New routine task added!');
     }
 
     setIsModalOpen(false);
@@ -108,13 +84,8 @@ export default function SchedulesPage() {
 
   const handleDeleteTask = (taskId) => {
     if (window.confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
-      if (isEditingTemplates) {
-        deleteTemplateTask(selectedProgram, selectedShift, taskId);
-        toast.success('Routine task template deleted.');
-      } else {
-        deleteActiveTask(activeSessionKey, taskId);
-        toast.success('Live active task deleted.');
-      }
+      deleteTemplateTask(selectedProgram, selectedShift, taskId);
+      toast.success('Routine task deleted.');
     }
   };
 
@@ -127,7 +98,7 @@ export default function SchedulesPage() {
         <div>
           <h1 className="text-2xl font-bold text-milieuNavy flex items-center gap-2">
             <CalendarRange size={24} className="text-milieuBlue" />
-            Schedules & Tasks
+            Schedules & 30 Mins Tasks
           </h1>
           <p className="text-slate-500 text-sm mt-0.5">Manage recurring routines and customize live shifts</p>
         </div>
@@ -170,95 +141,19 @@ export default function SchedulesPage() {
             ))}
           </select>
         </div>
-
-        {/* Management Mode Selector */}
-        <div className="col-span-2 sm:col-span-1 flex flex-col justify-between">
-          <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1.5">Management Mode</label>
-          <div className="grid grid-cols-2 gap-1 bg-slate-100 p-0.5 rounded-lg">
-            <button
-              onClick={() => setIsEditingTemplates(true)}
-              className={`py-1.5 px-2 text-[10px] font-bold rounded transition-all flex items-center justify-center gap-1 ${
-                isEditingTemplates 
-                  ? 'bg-white text-milieuNavy shadow-xs' 
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              <Layers size={11} />
-              Routines
-            </button>
-            <button
-              onClick={() => {
-                setIsEditingTemplates(false);
-                if (!activeSession) {
-                  toast.error(`No live shift is active for ${activeProgram?.name} during this shift.`);
-                }
-              }}
-              className={`py-1.5 px-2 text-[10px] font-bold rounded transition-all flex items-center justify-center gap-1 ${
-                !isEditingTemplates 
-                  ? 'bg-white text-milieuBlue shadow-xs' 
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              <RefreshCw size={11} className={activeSession ? "animate-spin-slow text-emerald-500" : ""} />
-              Live Shift
-            </button>
-          </div>
-        </div>
       </div>
 
-      {/* Mode Status Info Banner */}
-      <div className={`p-2.5 sm:p-4 rounded-xl border flex items-start gap-2.5 sm:gap-3 shadow-sm ${
-        isEditingTemplates 
-          ? 'bg-blue-50/50 border-blue-200 text-blue-800' 
-          : activeSession 
-            ? 'bg-emerald-50/50 border-emerald-200 text-emerald-800'
-            : 'bg-rose-50/50 border-rose-200 text-rose-800'
-      }`}>
-        {isEditingTemplates ? (
-          <>
-            <Sparkles size={18} className="text-milieuBlue flex-shrink-0" />
-            <p className="text-xs leading-relaxed">
-              <strong>Routine Templates Mode:</strong> You are modifying the standard recurring checklist tasks. Changes apply to all <strong>future shifts</strong> initiated by staff.
-            </p>
-          </>
-        ) : activeSession ? (
-          <>
-            <Activity size={18} className="text-emerald-500 flex-shrink-0 animate-pulse" />
-            <p className="text-xs leading-relaxed">
-              <strong>Live Shift Mode:</strong> A live shift is running right now! Edits made here will update the active floor checklist for the staff on duty (Sarah/Sarah's team) instantly.
-            </p>
-          </>
-        ) : (
-          <>
-            <AlertTriangle size={18} className="text-rose-500 flex-shrink-0" />
-            <p className="text-xs leading-relaxed">
-              <strong>Live Shift Inactive:</strong> There is no active shift recorded for {activeProgram?.name} - {selectedShift} shift today. Switch back to <strong>Routine Templates</strong> to configure schedules, or initiate a shift from the staff dashboard first.
-            </p>
-          </>
-        )}
-      </div>
-
-      {/* Search & Checklist Panel */}
+      {/* Checklist Panel */}
       <div className="glass-card p-3 sm:p-6 space-y-3 sm:space-y-4">
         <div className="flex items-center gap-3 justify-between flex-wrap">
           <h2 className="text-slate-800 font-bold text-base sm:text-lg flex items-center gap-2">
             <FileText size={18} className="text-slate-500" />
-            Shift Task Checklist ({filteredTasks.length})
+            30 Mins Tasks ({sortedTasks.length})
           </h2>
-          <div className="relative w-full sm:w-96">
-            <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search tasks..."
-              className="input-field pl-9 pr-4 py-1.5 w-full text-xs text-slate-800"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
         </div>
 
         {/* Tasks List */}
-        {filteredTasks.length === 0 ? (
+        {sortedTasks.length === 0 ? (
           <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
             <CalendarRange size={36} className="mx-auto text-slate-300 mb-3" />
             <p className="text-slate-800 font-medium text-sm">No tasks scheduled</p>
@@ -266,7 +161,7 @@ export default function SchedulesPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {filteredTasks.map((task) => (
+            {sortedTasks.map((task) => (
               <div 
                 key={task.id}
                 className="flex flex-col sm:flex-row sm:items-start gap-2.5 sm:gap-4 p-3 sm:p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 hover:shadow-sm transition-all"
@@ -275,7 +170,7 @@ export default function SchedulesPage() {
                 <div className="flex items-center justify-between sm:block flex-shrink-0 w-full sm:w-auto">
                   <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 text-milieuBlue text-xs font-semibold px-2.5 py-1 rounded-lg">
                     <Clock size={12} />
-                    <span>{task.startTime} – {task.endTime}</span>
+                    <span>{formatTimeSlot(task.startTime)} – {formatTimeSlot(task.endTime)}</span>
                   </div>
                   {/* Mobile-only CRUD Actions */}
                   <div className="flex items-center gap-1 sm:hidden">
@@ -300,12 +195,6 @@ export default function SchedulesPage() {
                 <div className="flex-1 min-w-0">
                   <h3 className="text-slate-800 font-bold text-sm leading-snug">{task.title}</h3>
                   <p className="text-slate-500 text-xs mt-1 leading-relaxed">{task.description}</p>
-                  
-                  {!isEditingTemplates && task.completedAt && (
-                    <div className="mt-2 inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] font-semibold px-2 py-0.5 rounded border border-emerald-100">
-                      ✓ Completed by {task.completedBy} at {new Date(task.completedAt).toLocaleTimeString('en-CA', {hour:'2-digit', minute:'2-digit'})}
-                    </div>
-                  )}
                 </div>
 
                 {/* CRUD Controls (Desktop-only) */}
