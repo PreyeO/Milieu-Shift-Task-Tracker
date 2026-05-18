@@ -10,6 +10,8 @@ export const PROGRAMS = [
     colorHex: '#0ea5a0',
     capacity: 3,
     description: 'Staffed residential home providing 24/7 supports for adults with developmental disabilities.',
+    phoneNumber: '+1 (604) 555-0144',
+    staffContact: 'Sarah Jenkins',
   },
   {
     id: 'parkside-b',
@@ -21,6 +23,8 @@ export const PROGRAMS = [
     colorHex: '#3b82f6',
     capacity: 2,
     description: 'Community-based residential support home with focus on community inclusion.',
+    phoneNumber: '+1 (604) 555-0182',
+    staffContact: 'Michael Chang',
   },
   {
     id: 'hudson',
@@ -32,6 +36,8 @@ export const PROGRAMS = [
     colorHex: '#8b5cf6',
     capacity: 4,
     description: 'Shared living residential home with employment and community programs.',
+    phoneNumber: '+1 (604) 555-0193',
+    staffContact: 'Emily Rogers',
   },
   {
     id: 'orion',
@@ -43,6 +49,8 @@ export const PROGRAMS = [
     colorHex: '#f97316',
     capacity: 3,
     description: 'Youth residential services with trauma-informed care and family supports.',
+    phoneNumber: '+1 (604) 555-0120',
+    staffContact: 'David Miller',
   },
   {
     id: 'sunrise',
@@ -54,6 +62,8 @@ export const PROGRAMS = [
     colorHex: '#f59e0b',
     capacity: 5,
     description: 'Community inclusion and daytime outreach programs for adults.',
+    phoneNumber: '+1 (604) 555-0177',
+    staffContact: 'Jessica Taylor',
   },
   {
     id: 'cedar',
@@ -65,6 +75,8 @@ export const PROGRAMS = [
     colorHex: '#22c55e',
     capacity: 2,
     description: 'Small-group residential home with specialized mental health supports.',
+    phoneNumber: '+1 (604) 555-0155',
+    staffContact: 'Robert Smith',
   },
 ];
 

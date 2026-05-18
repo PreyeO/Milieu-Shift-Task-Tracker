@@ -190,6 +190,11 @@ export default function ProgramsPage() {
                     <span>•</span>
                     <span className="flex items-center gap-0.5"><Users size={10} />Capacity: {activeProgram.capacity}</span>
                   </p>
+                  <p className="text-slate-500 text-[9px] mt-1.5 font-semibold flex items-center gap-1 flex-wrap">
+                    <span>📞 {activeProgram.phoneNumber}</span>
+                    <span className="text-slate-400">|</span>
+                    <span>Contact: {activeProgram.staffContact}</span>
+                  </p>
                 </div>
               </div>
 
@@ -228,6 +233,19 @@ export default function ProgramsPage() {
                   <div className="inline-flex items-center gap-1 bg-rose-100 text-rose-800 text-[9px] font-bold px-2 py-0.5 rounded-full mt-0.5">
                     Offline
                   </div>
+                )}
+                {activeProgram.phoneNumber && (
+                  <button 
+                    onClick={() => {
+                      toast.success(
+                        `💬 SMS Reminder sent to ${activeProgram.staffContact} (${activeProgram.phoneNumber}): "Hi ${activeProgram.staffContact.split(' ')[0]}, this is a reminder from management to check and sign off on today's active shift checklist for ${activeProgram.name}. — MilieuCare"`,
+                        { duration: 6000, icon: '💬' }
+                      );
+                    }}
+                    className="mt-2 inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-[9px] font-bold px-2 py-1 rounded-lg transition-all shadow-xs"
+                  >
+                    💬 Send SMS Reminder
+                  </button>
                 )}
               </div>
             </div>

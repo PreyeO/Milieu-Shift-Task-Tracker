@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAlertStore } from '../store/alertStore';
 import { PROGRAMS, getProgramById } from '../data/programs';
 import { Bell, AlertTriangle, CheckCircle, Clock, Filter, Trash2, Eye } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const ALERT_TYPES = { all: 'All', missed: 'Missed', late: 'Late', 'bulk-submit': 'Bulk Submit' };
 
@@ -137,16 +138,33 @@ export default function AlertsPage() {
                       {alert.taskTitle || 'System Alert'}
                     </p>
                     <p className="text-slate-600 text-xs leading-relaxed">{alert.message}</p>
-                    <div className="flex items-center gap-3 mt-2">
-                      {program && (
-                        <span className="text-[10px] text-slate-500 flex items-center gap-1">
-                          📍 {program.name}
-                        </span>
-                      )}
-                      {alert.read && (
-                        <span className="text-[10px] text-slate-600 flex items-center gap-1">
-                          <CheckCircle size={10} /> Reviewed
-                        </span>
+                    <div className="flex items-center justify-between gap-2 mt-3 flex-wrap border-t border-slate-100/50 pt-2.5">
+                      <div className="flex items-center gap-3">
+                        {program && (
+                          <span className="text-[10px] text-slate-500 flex items-center gap-1 font-semibold">
+                            📍 {program.name}
+                          </span>
+                        )}
+                        {alert.read && (
+                          <span className="text-[10px] text-slate-600 flex items-center gap-1">
+                            <CheckCircle size={10} /> Reviewed
+                          </span>
+                        )}
+                      </div>
+                      
+                      {program?.phoneNumber && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toast.success(
+                              `💬 SMS Alert sent to ${program.staffContact} (${program.phoneNumber}): "Urgent Alert: The duty '${alert.taskTitle}' is marked ${alert.type.toUpperCase()} at ${program.name}. Please take action immediately. — MilieuCare"`,
+                              { duration: 6000, icon: '💬' }
+                            );
+                          }}
+                          className="inline-flex items-center gap-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-[9px] font-bold px-2 py-0.5 rounded transition-all"
+                        >
+                          💬 Send SMS Alert
+                        </button>
                       )}
                     </div>
                   </div>
