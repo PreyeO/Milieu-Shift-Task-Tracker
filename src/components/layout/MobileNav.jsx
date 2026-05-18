@@ -50,13 +50,19 @@ export default function MobileNav() {
           <img src={milieuLogo} alt="Milieu" className="h-7 object-contain" />
         </div>
         <div className="flex items-center gap-3">
-          {unread > 0 && (
-            <div className="relative">
-              <Bell size={20} className="text-slate-400" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                {unread}
-              </span>
-            </div>
+          {isManager && (
+            <button 
+              onClick={() => navigate("/alerts")}
+              className="relative p-1 text-slate-500 hover:text-slate-800 hover:scale-105 transition-all"
+              title="View Alerts"
+            >
+              <Bell size={20} />
+              {unread > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white">
+                  {unread}
+                </span>
+              )}
+            </button>
           )}
           <button onClick={() => setOpen(!open)} className="text-slate-600 p-1">
             {open ? <X size={22} /> : <Menu size={22} />}
