@@ -87,13 +87,16 @@ export default function MobileNav() {
                 end
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
-                  `nav-item ${isActive ? "active" : ""} text-base py-4`
+                  `flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 text-sm font-semibold
+                   ${isActive 
+                     ? "bg-blue-50 text-milieuBlue font-bold border border-blue-100 shadow-sm" 
+                     : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`
                 }
               >
-                <Icon size={20} />
+                <Icon size={18} />
                 <span className="flex-1">{label}</span>
                 {badge > 0 && (
-                  <span className="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5">
+                  <span className="bg-red-500 text-white text-[10px] font-bold rounded-full px-2 py-0.5">
                     {badge}
                   </span>
                 )}
@@ -103,9 +106,9 @@ export default function MobileNav() {
           <div className="p-4 border-t border-slate-200">
             <button
               onClick={handleLogout}
-              className="nav-item w-full text-left text-red-400 hover:bg-red-500/10 py-4 text-base"
+              className="flex items-center gap-3 px-4 py-3.5 rounded-xl w-full text-left font-semibold text-sm text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all border border-transparent hover:border-rose-100"
             >
-              <LogOut size={20} />
+              <LogOut size={18} />
               <span>Sign Out</span>
             </button>
           </div>

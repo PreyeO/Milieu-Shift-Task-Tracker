@@ -64,7 +64,7 @@ export default function StaffDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-milieuNavy">My Tasks</h1>
           <p className="text-slate-600 text-sm mt-0.5 flex items-center gap-2">

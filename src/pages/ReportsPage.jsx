@@ -101,7 +101,7 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-milieuNavy flex items-center gap-2">
             <BarChart3 size={22} className="text-milieuBlue" />

@@ -80,7 +80,7 @@ export default function AlertsPage() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           { label: 'Missed Tasks', count: alerts.filter(a => a.type === 'missed').length, color: 'text-rose-600' },
           { label: 'Late Sign-Offs', count: alerts.filter(a => a.type === 'late').length, color: 'text-amber-600' },

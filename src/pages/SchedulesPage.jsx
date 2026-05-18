@@ -5,7 +5,7 @@ import { getShiftDateString } from '../utils/timeUtils';
 import { 
   CalendarRange, Plus, Edit2, Trash2, Clock, 
   Sparkles, Layers, RefreshCw, Search, 
-  Check, X, FileText, AlertTriangle 
+  Check, X, FileText, AlertTriangle, Activity 
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -141,13 +141,13 @@ export default function SchedulesPage() {
         </button>
       </div>
 
-      {/* Program & Shift Selector */}
-      <div className="grid md:grid-cols-3 gap-4">
-        {/* Select Program */}
-        <div className="glass-card p-4">
-          <label className="block text-slate-700 text-xs font-semibold uppercase tracking-wider mb-2">Residential Home</label>
+      {/* Program, Shift, and Mode Selector Panel */}
+      <div className="glass-card p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {/* Residential Home Selector */}
+        <div className="col-span-2 sm:col-span-1">
+          <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1.5">Residential Home</label>
           <select 
-            className="input-field w-full text-slate-800"
+            className="input-field py-1.5 px-2.5 text-xs text-slate-800"
             value={selectedProgram}
             onChange={(e) => setSelectedProgram(e.target.value)}
           >
@@ -157,49 +157,49 @@ export default function SchedulesPage() {
           </select>
         </div>
 
-        {/* Select Shift */}
-        <div className="glass-card p-4">
-          <label className="block text-slate-700 text-xs font-semibold uppercase tracking-wider mb-2">Shift Schedule</label>
+        {/* Shift Selector */}
+        <div className="col-span-2 sm:col-span-1">
+          <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1.5">Shift Schedule</label>
           <select 
-            className="input-field w-full text-slate-800"
+            className="input-field py-1.5 px-2.5 text-xs text-slate-800"
             value={selectedShift}
             onChange={(e) => setSelectedShift(e.target.value)}
           >
             {SHIFTS.map(s => (
-              <option key={s.key} value={s.key}>{s.label}</option>
+              <option key={s.key} value={s.key}>{s.label.split(' (')[0]}</option>
             ))}
           </select>
         </div>
 
-        {/* Editing Mode */}
-        <div className="glass-card p-4 flex flex-col justify-between">
-          <label className="block text-slate-700 text-xs font-semibold uppercase tracking-wider mb-1.5">Management Mode</label>
-          <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-lg">
+        {/* Management Mode Selector */}
+        <div className="col-span-2 sm:col-span-1 flex flex-col justify-between">
+          <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1.5">Management Mode</label>
+          <div className="grid grid-cols-2 gap-1 bg-slate-100 p-0.5 rounded-lg">
             <button
               onClick={() => setIsEditingTemplates(true)}
-              className={`py-1.5 px-3 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1.5 ${
+              className={`py-1.5 px-2 text-[10px] font-bold rounded transition-all flex items-center justify-center gap-1 ${
                 isEditingTemplates 
-                  ? 'bg-white text-milieuNavy shadow-sm' 
+                  ? 'bg-white text-milieuNavy shadow-xs' 
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              <Layers size={13} />
+              <Layers size={11} />
               Routines
             </button>
             <button
               onClick={() => {
                 setIsEditingTemplates(false);
                 if (!activeSession) {
-                  toast.error(`No live shift is currently active for ${activeProgram?.name} during this shift. Start a session as staff first.`);
+                  toast.error(`No live shift is active for ${activeProgram?.name} during this shift.`);
                 }
               }}
-              className={`py-1.5 px-3 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1.5 ${
+              className={`py-1.5 px-2 text-[10px] font-bold rounded transition-all flex items-center justify-center gap-1 ${
                 !isEditingTemplates 
-                  ? 'bg-white text-milieuBlue shadow-sm' 
+                  ? 'bg-white text-milieuBlue shadow-xs' 
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              <RefreshCw size={13} className={activeSession ? "animate-spin-slow text-emerald-500" : ""} />
+              <RefreshCw size={11} className={activeSession ? "animate-spin-slow text-emerald-500" : ""} />
               Live Shift
             </button>
           </div>
@@ -207,7 +207,7 @@ export default function SchedulesPage() {
       </div>
 
       {/* Mode Status Info Banner */}
-      <div className={`p-4 rounded-xl border flex items-center gap-3 shadow-sm ${
+      <div className={`p-2.5 sm:p-4 rounded-xl border flex items-start gap-2.5 sm:gap-3 shadow-sm ${
         isEditingTemplates 
           ? 'bg-blue-50/50 border-blue-200 text-blue-800' 
           : activeSession 
@@ -239,18 +239,18 @@ export default function SchedulesPage() {
       </div>
 
       {/* Search & Checklist Panel */}
-      <div className="glass-card p-6 space-y-4">
+      <div className="glass-card p-3 sm:p-6 space-y-3 sm:space-y-4">
         <div className="flex items-center gap-3 justify-between flex-wrap">
-          <h2 className="text-slate-800 font-bold text-lg flex items-center gap-2">
+          <h2 className="text-slate-800 font-bold text-base sm:text-lg flex items-center gap-2">
             <FileText size={18} className="text-slate-500" />
             Shift Task Checklist ({filteredTasks.length})
           </h2>
-          <div className="relative w-full sm:w-64">
-            <Search size={15} className="absolute left-3 top-2.5 text-slate-400" />
+          <div className="relative w-full sm:w-96">
+            <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
             <input
               type="text"
               placeholder="Search tasks..."
-              className="input-field pl-9 pr-4 py-1.5 w-full text-sm"
+              className="input-field pl-9 pr-4 py-1.5 w-full text-xs text-slate-800"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -269,12 +269,31 @@ export default function SchedulesPage() {
             {filteredTasks.map((task) => (
               <div 
                 key={task.id}
-                className="flex items-start gap-4 p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 hover:shadow-sm transition-all"
+                className="flex flex-col sm:flex-row sm:items-start gap-2.5 sm:gap-4 p-3 sm:p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 hover:shadow-sm transition-all"
               >
-                {/* Time Indicator */}
-                <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 text-milieuBlue text-xs font-semibold px-2.5 py-1 rounded-lg flex-shrink-0 mt-0.5">
-                  <Clock size={12} />
-                  <span>{task.startTime} – {task.endTime}</span>
+                {/* Time Indicator & Mobile Actions Header */}
+                <div className="flex items-center justify-between sm:block flex-shrink-0 w-full sm:w-auto">
+                  <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 text-milieuBlue text-xs font-semibold px-2.5 py-1 rounded-lg">
+                    <Clock size={12} />
+                    <span>{task.startTime} – {task.endTime}</span>
+                  </div>
+                  {/* Mobile-only CRUD Actions */}
+                  <div className="flex items-center gap-1 sm:hidden">
+                    <button 
+                      onClick={() => handleOpenEditModal(task)}
+                      className="p-1.5 text-slate-400 hover:text-milieuBlue hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Edit Task"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteTask(task.id)}
+                      className="p-1.5 text-slate-400 hover:text-milieuCoral hover:bg-rose-50 rounded-lg transition-colors"
+                      title="Delete Task"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Task Details */}
@@ -289,8 +308,8 @@ export default function SchedulesPage() {
                   )}
                 </div>
 
-                {/* CRUD Controls */}
-                <div className="flex items-center gap-1 flex-shrink-0 self-center">
+                {/* CRUD Controls (Desktop-only) */}
+                <div className="hidden sm:flex items-center gap-1 flex-shrink-0 self-center">
                   <button 
                     onClick={() => handleOpenEditModal(task)}
                     className="p-1.5 text-slate-400 hover:text-milieuBlue hover:bg-blue-50 rounded-lg transition-colors"
