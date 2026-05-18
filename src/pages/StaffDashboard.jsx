@@ -9,6 +9,7 @@ import TaskCard from '../components/tasks/TaskCard';
 import TaskSignOffModal from '../components/tasks/TaskSignOffModal';
 import Badge from '../components/ui/Badge';
 import { Clock, CheckCircle, AlertCircle, Calendar, TrendingUp, Sun, Sunset, Moon } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const SHIFT_ICONS = { day: Sun, evening: Sunset, night: Moon };
 const SHIFT_COLORS = { day: 'text-amber-400', evening: 'text-orange-400', night: 'text-blue-400' };
@@ -54,6 +55,39 @@ export default function StaffDashboard() {
   const pending = tasks.filter(t => t.status === 'pending').length;
   const compliance = calculateCompliance(tasks.filter(t => t.status !== 'upcoming'));
   const currentTask = tasks.find(t => t.status === 'pending');
+
+  // Simulator: If a task has been pending/active for 5 minutes, automatically notify the staff
+  useEffect(() => {
+    if (currentTask && program) {
+      const timer = setTimeout(() => {
+        toast.custom((t) => (
+          <div className="max-w-md w-full bg-slate-900 shadow-xl rounded-xl pointer-events-auto flex ring-1 ring-black ring-opacity-5 p-3.5 border border-slate-800 animate-slide-in">
+            <div className="flex-1 w-0">
+              <p className="text-[10px] font-black tracking-wider text-emerald-400 uppercase flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                💬 Automated Compliance SMS Sent
+              </p>
+              <p className="text-xs font-semibold text-white mt-1">
+                To: {program.staffContact} ({program.phoneNumber})
+              </p>
+              <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed italic border-l-2 border-slate-700 pl-2">
+                "Hi {program.staffContact.split(' ')[0]}, the duty '{currentTask.title}' scheduled for {currentTask.startTime} has been active for 5 minutes. Please complete and sign off. — MilieuCare"
+              </p>
+            </div>
+            <div className="ml-4 flex-shrink-0 flex">
+              <button
+                onClick={() => toast.dismiss(t.id)}
+                className="bg-slate-800 hover:bg-slate-700 rounded-md inline-flex text-slate-400 hover:text-slate-200 text-[10px] px-2 py-1 font-bold h-fit transition-all border border-slate-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        ), { duration: 9000, id: 'auto-sms-toast' });
+      }, 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentTask, program]);
 
   const openTask = (task) => {
     if (task.status === 'upcoming' || task.status === 'completed') return;
