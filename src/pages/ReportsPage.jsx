@@ -5,6 +5,7 @@ import {
   calculateCompliance,
   calculateOnTimeRate,
 } from "../utils/complianceUtils";
+import PrintableChart from "../components/tasks/PrintableChart";
 
 import {
   BarChart,
@@ -84,7 +85,10 @@ const generateMonthlyData = () => {
 export default function ReportsPage() {
   const sessions = useTaskStore((state) => state.sessions);
   const [reportType, setReportType] = useState("weekly");
-  const [selectedProgram, setSelectedProgram] = useState("all");
+  const [selectedProgram, setSelectedProgram] = useState("hudson");
+  const [activeTab, setActiveTab] = useState("analytics");
+  const [chartShift, setChartShift] = useState("day");
+  const [chartDate, setChartDate] = useState(new Date().toISOString().split('T')[0]);
 
   const allTasks = Object.values(sessions).flatMap((s) => s.tasks || []);
   const filteredTasks =
@@ -161,14 +165,35 @@ export default function ReportsPage() {
             Compliance analytics & shift history
           </p>
         </div>
+        {activeTab === "analytics" && (
+          <button
+            onClick={() => window.print()}
+            className="btn-secondary flex items-center gap-2 text-sm print:hidden"
+          >
+            <Download size={15} />
+            Export PDF
+          </button>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <div className="flex border-b border-slate-200">
         <button
-          onClick={() => window.print()}
-          className="btn-secondary flex items-center gap-2 text-sm print:hidden"
+          onClick={() => setActiveTab("analytics")}
+          className={`pb-3 px-4 text-sm font-semibold transition-all border-b-2 ${activeTab === "analytics" ? "border-milieuBlue text-milieuBlue" : "border-transparent text-slate-500 hover:text-slate-700"}`}
         >
-          <Download size={15} />
-          Export PDF
+          Compliance Analytics
+        </button>
+        <button
+          onClick={() => setActiveTab("paper")}
+          className={`pb-3 px-4 text-sm font-semibold transition-all border-b-2 ${activeTab === "paper" ? "border-milieuBlue text-milieuBlue" : "border-transparent text-slate-500 hover:text-slate-700"}`}
+        >
+          Printable Chart (Paper Form)
         </button>
       </div>
+
+      {activeTab === "analytics" ? (
+        <div className="space-y-6">
 
       {/* Filters */}
       <div className="glass-card p-4 flex flex-wrap items-center gap-3">
@@ -423,6 +448,55 @@ export default function ReportsPage() {
           )}
         </div>
       </div>
+      </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="glass-card p-4 flex flex-wrap items-center gap-4">
+            <div className="flex flex-col">
+              <label className="text-xs text-slate-500 mb-1 font-semibold">Program</label>
+              <select
+                className="input-field py-1.5 text-sm w-48"
+                value={selectedProgram === "all" ? "hudson" : selectedProgram}
+                onChange={(e) => setSelectedProgram(e.target.value)}
+              >
+                {PROGRAMS.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <label className="text-xs text-slate-500 mb-1 font-semibold">Date</label>
+              <input
+                type="date"
+                className="input-field py-1.5 text-sm w-40"
+                value={chartDate}
+                onChange={(e) => setChartDate(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-xs text-slate-500 mb-1 font-semibold">Shift</label>
+              <select
+                className="input-field py-1.5 text-sm w-32"
+                value={chartShift}
+                onChange={(e) => setChartShift(e.target.value)}
+              >
+                <option value="day">Day (7a-3p)</option>
+                <option value="evening">Evening (3p-11p)</option>
+                <option value="night">Night (11p-7a)</option>
+              </select>
+            </div>
+          </div>
+
+          <PrintableChart 
+            tasks={filteredTasks.filter(t => t.shift === chartShift)}
+            program={PROGRAMS.find(p => p.id === (selectedProgram === "all" ? "hudson" : selectedProgram))}
+            shift={chartShift}
+            date={new Date(chartDate + 'T12:00:00')} // Force local noon to avoid timezone issues
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -110,19 +110,12 @@ function TaskRow({ task, sessionTask }) {
 export default function ProgramsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [shift, setShift] = useState("day");
-  const { initSession } = useTaskStore();
+  const { fetchActiveSessions } = useTaskStore();
   const sessions = useTaskStore((state) => state.sessions);
 
-  // Initialize demo shifts for preview on mount
+  // Load real sessions from Supabase on mount
   useEffect(() => {
-    const hour = new Date().getHours();
-    const currentShift =
-      hour >= 7 && hour < 15
-        ? "day"
-        : hour >= 15 && hour < 23
-          ? "evening"
-          : "night";
-    PROGRAMS.forEach((p) => initSession(p.id, currentShift, "demo-staff"));
+    fetchActiveSessions();
   }, []);
 
   const focusId = searchParams.get("p");

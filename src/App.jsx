@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
+import { useTaskStore } from './store/taskStore';
+import { useAlertStore } from './store/alertStore';
 import Sidebar from './components/layout/Sidebar';
 import MobileNav from './components/layout/MobileNav';
 import LoginPage from './pages/LoginPage';
@@ -14,6 +16,19 @@ import SchedulesPage from './pages/SchedulesPage';
 
 function ProtectedLayout({ requiredRole }) {
   const { isAuthenticated, user } = useAuthStore();
+  
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      const cleanupTasks = useTaskStore.getState().setupRealtime();
+      const cleanupAlerts = useAlertStore.getState().setupRealtime();
+      useAlertStore.getState().fetchAlerts(); // Load initial alerts
+      return () => {
+        cleanupTasks();
+        cleanupAlerts();
+      };
+    }
+  }, [isAuthenticated]);
+
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (requiredRole && user?.role !== requiredRole) {
     return <Navigate to={user?.role === 'manager' ? '/manager' : '/staff'} replace />;

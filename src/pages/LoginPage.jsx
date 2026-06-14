@@ -19,7 +19,7 @@ export default function LoginPage() {
   const [role, setRole] = useState("staff"); // 'staff' or 'manager'
   const [programId, setProgramId] = useState(PROGRAMS[0].id);
   const [username, setUsername] = useState("staff");
-  const [password, setPassword] = useState("demo123");
+  const [password, setPassword] = useState("");
 
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");

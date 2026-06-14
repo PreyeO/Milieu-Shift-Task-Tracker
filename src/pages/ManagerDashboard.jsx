@@ -100,13 +100,20 @@ function ProgramCard({ program, session, alertCount, onClick }) {
 
           {/* Current task */}
           {pending && (
-            <div className="bg-white/50 rounded-lg px-3 py-2 mb-3 border border-slate-200/50">
-              <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">
-                Active Now
-              </p>
-              <p className="text-slate-800 text-xs font-medium truncate">
-                {pending.title}
-              </p>
+            <div className="bg-white rounded-lg p-2.5 mb-3 border border-slate-200 shadow-sm flex items-start gap-2 relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-1 h-full bg-milieuBlue"></div>
+              <div className="mt-1 relative flex h-2 w-2 ml-1 flex-shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-milieuBlue opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-milieuBlue"></span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold text-milieuBlue uppercase tracking-wider mb-0.5">
+                  Currently Active
+                </p>
+                <p className="text-slate-800 text-xs font-bold truncate">
+                  {pending.title}
+                </p>
+              </div>
             </div>
           )}
 
@@ -142,22 +149,15 @@ function ProgramCard({ program, session, alertCount, onClick }) {
 export default function ManagerDashboard() {
   useTaskTimer();
   const { user } = useAuthStore();
-  const { initSession } = useTaskStore();
+  const { fetchActiveSessions, resetSystem } = useTaskStore();
   const sessions = useTaskStore((state) => state.sessions);
   const { alerts } = useAlertStore();
   const navigate = useNavigate();
   const [, forceUpdate] = useState(0);
 
   useEffect(() => {
-    // Seed demo sessions for all programs so manager can see activity
-    const hour = new Date().getHours();
-    const shift =
-      hour >= 7 && hour < 15
-        ? "day"
-        : hour >= 15 && hour < 23
-          ? "evening"
-          : "night";
-    PROGRAMS.forEach((p) => initSession(p.id, shift, "demo-staff"));
+    // Fetch real active sessions from Supabase
+    fetchActiveSessions();
     const t = setInterval(() => forceUpdate((n) => n + 1), 60000);
     return () => clearInterval(t);
   }, []);
@@ -205,15 +205,29 @@ export default function ManagerDashboard() {
             {getShiftLabel(currentShift)} · Real-time Overview
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-slate-500 text-xs">Today</p>
-          <p className="text-slate-800 text-sm font-medium">
-            {new Date().toLocaleDateString("en-CA", {
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-            })}
-          </p>
+        <div className="text-right flex items-center gap-4">
+          <button 
+            onClick={async () => {
+              if (window.confirm("This will clear all historical data from past days. Today's active shift data will remain. Continue?")) {
+                await resetSystem();
+                useAlertStore.getState().clearAlerts();
+                alert("Past data has been cleared. Today's shifts are intact.");
+              }
+            }}
+            className="text-xs text-rose-500 font-bold px-3 py-1.5 border border-rose-200 rounded-lg hover:bg-rose-50 transition-colors"
+          >
+            Clear History
+          </button>
+          <div className="text-right">
+            <p className="text-slate-500 text-xs">Today</p>
+            <p className="text-slate-800 text-sm font-medium">
+              {new Date().toLocaleDateString("en-CA", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+              })}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -375,43 +389,6 @@ export default function ManagerDashboard() {
             </div>
           )}
 
-          {/* Quick tips */}
-          <div className="glass-card p-4 mt-4 bg-slate-100/50">
-            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <Zap size={12} className="text-milieuBlue" /> Alert Guide
-            </p>
-            <div className="space-y-2">
-              {[
-                {
-                  color: "rose",
-                  label: "Missed",
-                  desc: "Task window expired, not completed",
-                },
-                {
-                  color: "amber",
-                  label: "Bulk Submit",
-                  desc: "3+ tasks completed in under 5 min",
-                },
-                {
-                  color: "blue",
-                  label: "Late",
-                  desc: "Completed after scheduled window",
-                },
-              ].map(({ color, label, desc }) => (
-                <div key={label} className="flex items-start gap-2">
-                  <span
-                    className={`w-2 h-2 rounded-full bg-${color}-500 mt-1 flex-shrink-0`}
-                  />
-                  <div>
-                    <p className="text-slate-700 text-xs font-medium">
-                      {label}
-                    </p>
-                    <p className="text-slate-500 text-[10px]">{desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>

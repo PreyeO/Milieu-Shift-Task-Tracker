@@ -7,14 +7,17 @@ import { parseSlotTime } from '../utils/timeUtils';
 import { detectBulkSubmit } from '../utils/complianceUtils';
 
 export const useTaskTimer = () => {
-  const { refreshStatuses, getActiveTasks, markAlertSent, getAllSessions } = useTaskStore();
+  const { refreshStatuses, refreshAllStatuses, getActiveTasks, markAlertSent, getAllSessions } = useTaskStore();
   const { addAlert } = useAlertStore();
   const { user } = useAuthStore();
   const intervalRef = useRef(null);
 
   useEffect(() => {
     const tick = () => {
+      // refreshStatuses handles the active staff session
+      // refreshAllStatuses handles ALL sessions (needed for manager view)
       refreshStatuses();
+      refreshAllStatuses();
       const allSessions = getAllSessions();
       const now = new Date();
       const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
@@ -44,22 +47,39 @@ export const useTaskTimer = () => {
 
           // Missed alert
           if (now > windowEnd && task.status === 'missed' && !task.alertSent) {
-            markAlertSent(task.id);
-            addAlert({
-              type: 'missed',
-              severity: 'high',
-              taskId: task.id,
-              taskTitle: task.title,
-              programId: task.programId,
-              staffId: task.staffId,
-              message: `Task "${task.title}" was not completed during the scheduled window (${task.startTime}–${task.endTime}).`,
+            // Verify with DB first in case local state is stale (e.g. Realtime delayed/disabled)
+            supabase.from('shift_tasks').select('completed_at').eq('id', task.id).single().then(({ data: dbTask }) => {
+              if (dbTask && dbTask.completed_at) {
+                // It was actually completed! Update local state to reflect reality and skip alerting.
+                useTaskStore.setState((state) => {
+                  const newSessions = { ...state.sessions };
+                  Object.keys(newSessions).forEach((key) => {
+                    newSessions[key].tasks = newSessions[key].tasks.map((t) =>
+                      t.id === task.id ? { ...t, completedAt: dbTask.completed_at, status: 'completed' } : t
+                    );
+                  });
+                  return { sessions: newSessions };
+                });
+                return;
+              }
+
+              // Truly missed, proceed with alert
+              markAlertSent(task.id);
+              addAlert({
+                type: 'missed',
+                severity: 'high',
+                taskId: task.id,
+                taskTitle: task.title,
+                programId: task.programId,
+                staffId: task.staffId,
+                message: `Task "${task.title}" was not completed during the scheduled window (${task.startTime}–${task.endTime}).`,
+              });
+              
+              const msSinceMissed = now - windowEnd;
+              if (user?.role === 'manager' && msSinceMissed < 2 * 60 * 1000) {
+                toast.error(`🚨 MISSED: "${task.title}" overdue!`, { duration: 8000 });
+              }
             });
-            // Only show a distracting toast popup if it was missed recently (within the last 2 minutes)
-            // This prevents a barrage of toasts when a manager logs in and old missed tasks are processed.
-            const msSinceMissed = now - windowEnd;
-            if (user?.role === 'manager' && msSinceMissed < 2 * 60 * 1000) {
-              toast.error(`🚨 MISSED: "${task.title}" overdue!`, { duration: 8000 });
-            }
           }
         });
 

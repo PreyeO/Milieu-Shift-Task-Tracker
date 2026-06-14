@@ -1,36 +1,119 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { supabase } from '../services/supabaseClient';
 
-export const useAlertStore = create(
-  persist(
-    (set, get) => ({
-      alerts: [],
+const mapAlert = (a) => ({
+  ...a,
+  programId: a.program_id,
+  taskId: a.task_id,
+  taskTitle: a.task_title,
+  createdAt: a.created_at
+});
 
-      addAlert: (alert) => {
-        const newAlert = {
-          id: `alert-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-          createdAt: new Date().toISOString(),
-          read: false,
-          ...alert,
-        };
-        set((state) => ({ alerts: [newAlert, ...state.alerts].slice(0, 200) }));
-      },
+export const useAlertStore = create((set, get) => ({
+  alerts: [],
+  isLoading: false,
 
-      markRead: (id) =>
+  fetchAlerts: async () => {
+    set({ isLoading: true });
+    const { data, error } = await supabase
+      .from('alerts')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(200);
+      
+    if (!error && data) {
+      set({ alerts: data.map(mapAlert), isLoading: false });
+    } else {
+      console.error('Error fetching alerts:', error);
+      set({ isLoading: false });
+    }
+  },
+
+  addAlert: async (alertData) => {
+    // Idempotency check: Don't create duplicate alerts for the same task and type
+    if (alertData.taskId) {
+      const { count } = await supabase
+        .from('alerts')
+        .select('*', { count: 'exact', head: true })
+        .eq('task_id', alertData.taskId)
+        .eq('type', alertData.type);
+        
+      if (count && count > 0) return;
+    }
+
+    const newAlert = {
+      id: `alert-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      created_at: new Date().toISOString(),
+      read: false,
+      program_id: alertData.programId,
+      task_id: alertData.taskId,
+      task_title: alertData.taskTitle,
+      type: alertData.type,
+      message: alertData.message,
+    };
+
+    // Optimistic update - use mapped version
+    set((state) => ({ alerts: [mapAlert(newAlert), ...state.alerts].slice(0, 200) }));
+
+    const { error } = await supabase.from('alerts').insert([newAlert]);
+    if (error) {
+      console.error('Error adding alert to supabase:', error);
+    }
+  },
+
+  markRead: async (id) => {
+    // Optimistic update
+    set((state) => ({
+      alerts: state.alerts.map((a) => (a.id === id ? { ...a, read: true } : a)),
+    }));
+
+    const { error } = await supabase.from('alerts').update({ read: true }).eq('id', id);
+    if (error) console.error('Error updating alert read status:', error);
+  },
+
+  markAllRead: async () => {
+    // Optimistic update
+    set((state) => ({ alerts: state.alerts.map((a) => ({ ...a, read: true })) }));
+
+    const { error } = await supabase.from('alerts').update({ read: true }).neq('read', true);
+    if (error) console.error('Error marking all alerts as read:', error);
+  },
+
+  clearAlerts: async () => {
+    set({ alerts: [] });
+    // Delete all alerts from the database
+    const { error } = await supabase.from('alerts').delete().neq('id', 'dummy');
+    if (error) console.error('Error clearing alerts:', error);
+  },
+
+  getUnreadCount: () => get().alerts.filter((a) => !a.read).length,
+
+  getAlertsByProgram: (programId) => get().alerts.filter((a) => a.programId === programId),
+
+  setupRealtime: () => {
+    const channel = supabase
+      .channel('public:alerts')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alerts' }, (payload) => {
+        set((state) => {
+          // Avoid duplicates if we optimistically added it
+          if (state.alerts.find(a => a.id === payload.new.id)) return state;
+          return { alerts: [mapAlert(payload.new), ...state.alerts].slice(0, 200) };
+        });
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'alerts' }, (payload) => {
         set((state) => ({
-          alerts: state.alerts.map((a) => (a.id === id ? { ...a, read: true } : a)),
-        })),
+          alerts: state.alerts.map(a => a.id === payload.new.id ? mapAlert(payload.new) : a)
+        }));
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'alerts' }, (payload) => {
+        set((state) => ({
+          alerts: state.alerts.filter(a => a.id !== payload.old.id)
+        }));
+      })
+      .subscribe();
 
-      markAllRead: () =>
-        set((state) => ({ alerts: state.alerts.map((a) => ({ ...a, read: true })) })),
-
-      clearAlerts: () => set({ alerts: [] }),
-
-      getUnreadCount: () => get().alerts.filter((a) => !a.read).length,
-
-      getAlertsByProgram: (programId) =>
-        get().alerts.filter((a) => a.programId === programId),
-    }),
-    { name: 'milieu-alerts' }
-  )
-);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }
+}));

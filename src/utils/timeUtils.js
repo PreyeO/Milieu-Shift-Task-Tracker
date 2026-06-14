@@ -39,10 +39,11 @@ export const parseSlotTime = (timeStr, baseDate = new Date()) => {
   
   // Handle midnight crossing for shift schedules
   const currentHour = baseDate.getHours();
-  if (h < 12 && currentHour >= 12) {
-    d.setDate(d.getDate() + 1); // Slot is actually tomorrow
-  } else if (h >= 12 && currentHour < 12) {
-    d.setDate(d.getDate() - 1); // Slot was actually yesterday
+  const diff = h - currentHour;
+  if (diff > 12) {
+    d.setDate(d.getDate() - 1); // Slot was actually yesterday (e.g. task at 23:00, current time is 01:00)
+  } else if (diff < -12) {
+    d.setDate(d.getDate() + 1); // Slot is actually tomorrow (e.g. task at 01:00, current time is 23:00)
   }
   
   return d;
