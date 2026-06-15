@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { PROGRAMS } from "../data/programs";
 import { TASK_TEMPLATES } from "../data/taskTemplates";
 import { useTaskStore } from "../store/taskStore";
-import { getShiftDateString, formatTimeSlot } from "../utils/timeUtils";
+import { getShiftDateString, getShiftForTime, formatTimeSlot } from "../utils/timeUtils";
 import { calculateCompliance } from "../utils/complianceUtils";
 import {
   ClipboardList,
@@ -109,7 +109,7 @@ function TaskRow({ task, sessionTask }) {
 
 export default function ProgramsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [shift, setShift] = useState("day");
+  const [shift, setShift] = useState(() => getShiftForTime(new Date().getHours()));
   const { fetchActiveSessions } = useTaskStore();
   const sessions = useTaskStore((state) => state.sessions);
 
@@ -129,13 +129,7 @@ export default function ProgramsPage() {
   const activeProgram = PROGRAMS.find((p) => p.id === activeProgramId);
 
   // Get active shift calculations for compliance
-  const hour = new Date().getHours();
-  const currentShift =
-    hour >= 7 && hour < 15
-      ? "day"
-      : hour >= 15 && hour < 23
-        ? "evening"
-        : "night";
+  const currentShift = getShiftForTime(new Date().getHours());
   const sessionKey = activeProgram
     ? `${activeProgram.id}-${currentShift}-${getShiftDateString()}`
     : "";
@@ -391,7 +385,7 @@ export default function ProgramsPage() {
               <div className="space-y-2">
                 {allTemplates.map((task) => {
                   const sessionTask = sessionTasks.find(
-                    (t) => t.id === task.id,
+                    (t) => t.templateId === task.id,
                   );
                   return (
                     <TaskRow

@@ -32,6 +32,18 @@ export const getShiftDateString = () => {
   return d.toDateString();
 };
 
+export const getShiftDateISO = () => {
+  const d = new Date();
+  if (d.getHours() < 7) {
+    d.setDate(d.getDate() - 1);
+  }
+  return d.toISOString().split('T')[0];
+};
+
+export const convertISOToShiftDateString = (isoString) => {
+  return new Date(isoString + 'T12:00:00').toDateString();
+};
+
 export const parseSlotTime = (timeStr, baseDate = new Date()) => {
   const [h, m] = timeStr.split(':').map(Number);
   const d = new Date(baseDate);

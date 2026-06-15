@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '../services/supabaseClient';
 import { TASK_TEMPLATES } from '../data/taskTemplates';
+import { PROGRAMS } from '../data/programs';
 import { getTaskStatus, getShiftDateString } from '../utils/timeUtils';
 
 const buildSessionTasks = (sessionId, programId, shift, staffId, templates) => {
@@ -31,9 +32,9 @@ export const useTaskStore = create((set, get) => ({
   activeSessionKey: null,
   isLoading: false,
 
-  fetchActiveSessions: async () => {
+  fetchActiveSessions: async (targetDateStr = null) => {
     set({ isLoading: true });
-    const dateStr = getShiftDateString();
+    const dateStr = targetDateStr || getShiftDateString();
     
     // Fetch all sessions for today
     const { data: existingSessions, error: sessionError } = await supabase
@@ -41,52 +42,126 @@ export const useTaskStore = create((set, get) => ({
       .select('*')
       .eq('date', dateStr);
 
-    if (existingSessions && !sessionError && existingSessions.length > 0) {
-      // Fetch tasks for these sessions
-      const sessionIds = existingSessions.map(s => s.id);
-      const { data: tasks, error: tasksError } = await supabase
-        .from('shift_tasks')
-        .select('*')
-        .in('session_id', sessionIds)
-        .order('start_time', { ascending: true });
+    if (existingSessions && !sessionError) {
+      // We only auto-initialize if we are fetching today's data to avoid creating future/past garbage
+      const isToday = dateStr === getShiftDateString();
 
-      if (!tasksError) {
-        const mappedTasks = tasks.map(t => {
-          const mapped = {
-            ...t,
-            startTime: t.start_time,
-            endTime: t.end_time,
-            completedAt: t.completed_at,
-            completedBy: t.completed_by,
-            alertSent: t.alert_sent,
-            programId: t.program_id,
-            sessionId: t.session_id,
-            staffId: t.staff_id,
-            templateId: t.template_id,
-          };
-          // Compute real-time status so manager & staff always agree
-          mapped.status = getTaskStatus(mapped);
-          return mapped;
-        });
+      if (isToday && !sessionError) {
+        // Find which sessions are missing for today
+        const existingKeys = new Set(existingSessions.map(s => `${s.program_id}-${s.shift}`));
+        
+        const missingSessions = [];
+        const newTasks = [];
+        
+        // Only create sessions for programs that exist in the PROGRAMS registry
+        const registeredIds = new Set(PROGRAMS.map(p => p.id));
+        for (const programId of Object.keys(TASK_TEMPLATES).filter(id => registeredIds.has(id))) {
+          for (const shift of ['day', 'evening', 'night']) {
+            if (!existingKeys.has(`${programId}-${shift}`)) {
+              // Create missing session
+              const newSessionId = `session-${programId}-${shift}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+              missingSessions.push({
+                id: newSessionId,
+                program_id: programId,
+                shift: shift,
+                date: dateStr,
+                staff_id: 'system', // Indicates auto-created by system
+                started_at: new Date().toISOString()
+              });
+              
+              const shiftTasks = buildSessionTasks(newSessionId, programId, shift, 'system', TASK_TEMPLATES);
+              newTasks.push(...shiftTasks);
+            }
+          }
+        }
 
-        const newSessionsState = {};
-        existingSessions.forEach(session => {
-          const sessionTasks = mappedTasks.filter(t => t.sessionId === session.id);
-          const sessionKey = `${session.program_id}-${session.shift}-${dateStr}`;
-          newSessionsState[sessionKey] = {
-            tasks: sessionTasks,
-            startedAt: session.started_at,
-            staffId: session.staff_id,
-            programId: session.program_id,
-            shift: session.shift
-          };
-        });
+        if (missingSessions.length > 0) {
+          await supabase.from('shift_sessions').insert(missingSessions);
+          if (newTasks.length > 0) {
+            await supabase.from('shift_tasks').insert(newTasks);
+          }
+          
+          // Refetch to get the newly created ones along with the old ones
+          const { data: refreshedSessions } = await supabase
+            .from('shift_sessions')
+            .select('*')
+            .eq('date', dateStr);
+            
+          if (refreshedSessions) {
+            existingSessions.length = 0;
+            existingSessions.push(...refreshedSessions);
+          }
+        }
+      }
 
-        set((state) => ({
-          sessions: { ...state.sessions, ...newSessionsState },
-          isLoading: false
-        }));
-        return;
+      if (existingSessions && existingSessions.length > 0) {
+        const sessionIds = existingSessions.map(s => s.id);
+        const { data: tasks, error: tasksError } = await supabase
+          .from('shift_tasks')
+          .select('*')
+          .in('session_id', sessionIds);
+
+        if (!tasksError && tasks) {
+          // Self-healing: if a session has 0 tasks, we should regenerate them
+          const sessionsToHeal = existingSessions.filter(s => 
+            !tasks.some(t => t.session_id === s.id)
+          );
+          
+          if (sessionsToHeal.length > 0) {
+            const healedTasks = [];
+            for (const s of sessionsToHeal) {
+              const shiftTasks = buildSessionTasks(s.id, s.program_id, s.shift, s.staff_id || 'system', TASK_TEMPLATES);
+              healedTasks.push(...shiftTasks);
+            }
+            if (healedTasks.length > 0) {
+              await supabase.from('shift_tasks').insert(healedTasks);
+              tasks.push(...healedTasks); // Add them locally so we don't need to refetch immediately
+            }
+          }
+
+          const mappedTasks = tasks.map(t => {
+            const mapped = {
+              ...t,
+              startTime: t.start_time,
+              endTime: t.end_time,
+              completedAt: t.completed_at,
+              completedBy: t.completed_by,
+              alertSent: t.alert_sent,
+              programId: t.program_id,
+              sessionId: t.session_id,
+              staffId: t.staff_id,
+              templateId: t.template_id,
+            };
+            mapped.status = getTaskStatus(mapped);
+            return mapped;
+          });
+
+          const newSessionsState = {};
+          existingSessions.forEach(session => {
+            const sessionTasks = mappedTasks.filter(t => t.sessionId === session.id);
+            const sessionKey = `${session.program_id}-${session.shift}-${dateStr}`;
+            // When duplicate sessions exist, keep the one with the most completions
+            // so staff sign-offs are never eclipsed by a system-created shadow session
+            const existing = newSessionsState[sessionKey];
+            const existingDone = existing?.tasks?.filter(t => t.completedAt).length ?? -1;
+            const thisDone = sessionTasks.filter(t => t.completedAt).length;
+            if (!existing || thisDone >= existingDone) {
+              newSessionsState[sessionKey] = {
+                tasks: sessionTasks,
+                startedAt: session.started_at,
+                staffId: session.staff_id,
+                programId: session.program_id,
+                shift: session.shift
+              };
+            }
+          });
+
+          set((state) => ({
+            sessions: { ...state.sessions, ...newSessionsState },
+            isLoading: false
+          }));
+          return;
+        }
       }
     }
     set({ isLoading: false });
@@ -97,16 +172,20 @@ export const useTaskStore = create((set, get) => ({
     const dateStr = getShiftDateString();
     const sessionKey = `${programId}-${shift}-${dateStr}`;
     
-    // Check if session exists in Supabase
-    const { data: existingSession, error: sessionError } = await supabase
+    // Check if session exists in Supabase — use array query to survive duplicates gracefully
+    const { data: sessionRows } = await supabase
       .from('shift_sessions')
       .select('*')
       .eq('program_id', programId)
       .eq('shift', shift)
       .eq('date', dateStr)
-      .maybeSingle();
+      .order('started_at', { ascending: true });
 
-    if (existingSession && !sessionError) {
+    // Prefer the oldest staff-created session so completions from the real shift are preserved
+    const existingSession =
+      sessionRows?.find(s => s.staff_id !== 'system') ?? sessionRows?.[0] ?? null;
+
+    if (existingSession) {
       // Fetch existing tasks
       const { data: tasks, error: tasksError } = await supabase
         .from('shift_tasks')
@@ -115,6 +194,15 @@ export const useTaskStore = create((set, get) => ({
         .order('start_time', { ascending: true });
 
       if (!tasksError) {
+        // Self-healing: if session exists but has 0 tasks, regenerate them
+        if (tasks.length === 0) {
+          const shiftTasks = buildSessionTasks(existingSession.id, programId, shift, staffId, TASK_TEMPLATES);
+          if (shiftTasks.length > 0) {
+            await supabase.from('shift_tasks').insert(shiftTasks);
+            tasks.push(...shiftTasks);
+          }
+        }
+
         // Map db fields back to frontend expected fields (camelCase) + compute real-time status
         const mappedTasks = tasks.map(t => {
           const mapped = {
@@ -162,18 +250,22 @@ export const useTaskStore = create((set, get) => ({
     const newTasks = buildSessionTasks(newSessionId, programId, shift, staffId, TASK_TEMPLATES);
     await supabase.from('shift_tasks').insert(newTasks);
 
-    const mappedTasks = newTasks.map(t => ({
-      ...t,
-      startTime: t.start_time,
-      endTime: t.end_time,
-      completedAt: t.completed_at,
-      completedBy: t.completed_by,
-      alertSent: t.alert_sent,
-      programId: t.program_id,
-      sessionId: t.session_id,
-      staffId: t.staff_id,
-      templateId: t.template_id,
-    }));
+    const mappedTasks = newTasks.map(t => {
+      const mapped = {
+        ...t,
+        startTime: t.start_time,
+        endTime: t.end_time,
+        completedAt: t.completed_at,
+        completedBy: t.completed_by,
+        alertSent: t.alert_sent,
+        programId: t.program_id,
+        sessionId: t.session_id,
+        staffId: t.staff_id,
+        templateId: t.template_id,
+      };
+      mapped.status = getTaskStatus(mapped);
+      return mapped;
+    });
 
     set((state) => ({
       sessions: { 
@@ -210,12 +302,15 @@ export const useTaskStore = create((set, get) => ({
 
     // Update Supabase
     const dbTask = updatedTasks.find(t => t.id === taskId);
-    await supabase.from('shift_tasks').update({
+    const { error } = await supabase.from('shift_tasks').update({
       completed_at: now,
       comment: comment,
       completed_by: completedBy,
       status: dbTask.status
     }).eq('id', taskId);
+    if (error) {
+      console.error('[completeTask] Supabase update failed — completion may not persist on reload:', error);
+    }
   },
 
   refreshStatuses: async () => {
@@ -327,8 +422,8 @@ export const useTaskStore = create((set, get) => ({
       });
       return { sessions: newSessions };
     });
-    // Update Supabase
-    await supabase.from('shift_tasks').update({ alert_sent: true }).eq('id', taskId);
+    const { error } = await supabase.from('shift_tasks').update({ alert_sent: true }).eq('id', taskId);
+    if (error) console.error('[markAlertSent] Supabase update failed:', error);
   },
   getAllSessions: () => get().sessions,
   clearOldSessions: () => {},

@@ -2,6 +2,8 @@ import { useRef } from 'react';
 import html2canvas from 'html2canvas';
 import { Download } from 'lucide-react';
 import { format } from 'date-fns';
+import { formatTimeSlot } from '../../utils/timeUtils';
+import { TASK_TEMPLATES } from '../../data/taskTemplates';
 
 export default function PrintableChart({ tasks, program, shift, date }) {
   const chartRef = useRef(null);
@@ -25,9 +27,15 @@ export default function PrintableChart({ tasks, program, shift, date }) {
     }
   };
 
+  const getDescription = (task) => {
+    if (task.description) return task.description;
+    const shiftTemplates = TASK_TEMPLATES[program?.id]?.[shift] || [];
+    return shiftTemplates.find(t => t.id === task.templateId)?.description || '';
+  };
+
   // Sort tasks by time
   const sortedTasks = [...tasks].sort((a, b) => {
-    return a.startTime.localeCompare(b.startTime);
+    return (a.startTime || '').localeCompare(b.startTime || '');
   });
 
   return (
@@ -76,11 +84,12 @@ export default function PrintableChart({ tasks, program, shift, date }) {
             <tbody>
               {sortedTasks.map((task) => (
                 <tr key={task.id}>
-                  <td className="border border-black p-2 align-top font-medium whitespace-nowrap">
-                    {task.startTime}-{task.endTime}
+                  <td className="border border-black p-2 align-top font-bold text-xs whitespace-nowrap">
+                    {formatTimeSlot(task.startTime)} - {formatTimeSlot(task.endTime)}
                   </td>
-                  <td className="border border-black p-2 align-top">
-                    {task.description || task.title}
+                  <td className="border border-black p-2 align-top text-xs whitespace-pre-wrap">
+                    <span className="font-bold block mb-1">{task.title}</span>
+                    {getDescription(task)}
                   </td>
                   <td className="border border-black p-2 align-top text-gray-600 italic text-xs">
                     {task.comment || ''}

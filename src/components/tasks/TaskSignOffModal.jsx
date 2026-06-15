@@ -3,7 +3,8 @@ import Modal from '../ui/Modal';
 import Badge from '../ui/Badge';
 import { useTaskStore } from '../../store/taskStore';
 import { useAuthStore } from '../../store/authStore';
-import { formatTime } from '../../utils/timeUtils';
+import { useAlertStore } from '../../store/alertStore';
+import { formatTime, parseSlotTime } from '../../utils/timeUtils';
 import { CheckCircle, Clock, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -13,6 +14,7 @@ export default function TaskSignOffModal({ task, isOpen, onClose }) {
   const [confirming, setConfirming] = useState(false);
   const { completeTask } = useTaskStore();
   const { user } = useAuthStore();
+  const addAlert = useAlertStore((state) => state.addAlert);
 
   if (!task) return null;
 
@@ -26,7 +28,23 @@ export default function TaskSignOffModal({ task, isOpen, onClose }) {
     }
     setConfirming(true);
     setTimeout(() => {
+      const now = new Date();
+      const windowEnd = parseSlotTime(task.endTime, now);
+      const isLate = now > windowEnd;
+
       completeTask(task.id, comment, initials.toUpperCase().trim());
+
+      if (isLate) {
+        addAlert({
+          type: 'late',
+          severity: 'medium',
+          taskId: task.id,
+          taskTitle: task.title,
+          programId: task.programId,
+          message: `Task "${task.title}" was signed off late at ${now.toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' })} (window closed at ${task.endTime}).`,
+        });
+      }
+
       toast.success(`✓ "${task.title}" signed off!`, {
         style: { background: '#ffffff', color: '#0f172a', border: '1px solid #10b981' },
         duration: 4000,

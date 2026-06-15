@@ -7,7 +7,7 @@ import {
   calculateCompliance,
   getComplianceColor,
 } from "../utils/complianceUtils";
-import { getShiftLabel, getShiftDateString } from "../utils/timeUtils";
+import { getShiftLabel, getShiftForTime, getShiftDateString } from "../utils/timeUtils";
 import { useTaskTimer } from "../hooks/useTaskTimer";
 import {
   AlertTriangle,
@@ -156,19 +156,12 @@ export default function ManagerDashboard() {
   const [, forceUpdate] = useState(0);
 
   useEffect(() => {
-    // Fetch real active sessions from Supabase
     fetchActiveSessions();
     const t = setInterval(() => forceUpdate((n) => n + 1), 60000);
     return () => clearInterval(t);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const hour = new Date().getHours();
-  const currentShift =
-    hour >= 7 && hour < 15
-      ? "day"
-      : hour >= 15 && hour < 23
-        ? "evening"
-        : "night";
+  const currentShift = getShiftForTime(new Date().getHours());
 
   // Find session for a program
   const getSession = (programId) => {
@@ -176,17 +169,26 @@ export default function ManagerDashboard() {
     return sessions[key] || null;
   };
 
-  // Global stats
-  const allTasks = Object.values(sessions).flatMap((s) => s.tasks || []);
-  const totalCompleted = allTasks.filter(
+  // Global stats — scoped to current shift + registered programs only
+  const registeredIds = new Set(PROGRAMS.map((p) => p.id));
+  const currentShiftTasks = Object.values(sessions)
+    .filter((s) => s.shift === currentShift && registeredIds.has(s.programId))
+    .flatMap((s) => s.tasks || []);
+  const totalCompleted = currentShiftTasks.filter(
     (t) => t.status === "completed" || t.status === "late",
   ).length;
-  const totalMissed = allTasks.filter((t) => t.status === "missed").length;
-  const totalTasks = allTasks.filter((t) => t.status !== "upcoming").length;
+  const totalMissed = currentShiftTasks.filter((t) => t.status === "missed").length;
+  const totalTasks = currentShiftTasks.filter((t) => t.status !== "upcoming").length;
   const globalCompliance =
     totalTasks > 0 ? Math.round((totalCompleted / totalTasks) * 100) : 0;
-  const unreadAlerts = alerts.filter((a) => !a.read);
-  const recentAlerts = alerts.slice(0, 5);
+
+  // Alerts — today's only, so historical missed-task alerts don't inflate the badge
+  const dateStr = getShiftDateString();
+  const todayAlerts = alerts.filter(
+    (a) => new Date(a.createdAt).toDateString() === dateStr,
+  );
+  const unreadAlerts = todayAlerts.filter((a) => !a.read);
+  const recentAlerts = todayAlerts.slice(0, 5);
 
   const managedPrograms = user?.programIds
     ? PROGRAMS.filter((p) => user.programIds.includes(p.id))
@@ -302,7 +304,7 @@ export default function ManagerDashboard() {
                 program={program}
                 session={getSession(program.id)}
                 alertCount={
-                  alerts.filter((a) => a.programId === program.id && !a.read)
+                  todayAlerts.filter((a) => a.programId === program.id && !a.read)
                     .length
                 }
                 onClick={() => navigate(`/programs?p=${program.id}`)}

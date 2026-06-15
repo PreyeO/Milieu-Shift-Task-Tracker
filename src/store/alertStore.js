@@ -30,16 +30,20 @@ export const useAlertStore = create((set, get) => ({
   },
 
   addAlert: async (alertData) => {
-    // Idempotency check: Don't create duplicate alerts for the same task and type
-    if (alertData.taskId) {
-      const { count } = await supabase
-        .from('alerts')
-        .select('*', { count: 'exact', head: true })
-        .eq('task_id', alertData.taskId)
-        .eq('type', alertData.type);
-        
-      if (count && count > 0) return;
+    // Idempotency: check by task_title + type + program within 24h so duplicate
+    // sessions (different task IDs, same template) don't generate extra alerts
+    const windowStart = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    let dupCheck = supabase
+      .from('alerts')
+      .select('*', { count: 'exact', head: true })
+      .eq('program_id', alertData.programId)
+      .eq('type', alertData.type)
+      .gte('created_at', windowStart);
+    if (alertData.taskTitle) {
+      dupCheck = dupCheck.eq('task_title', alertData.taskTitle);
     }
+    const { count } = await dupCheck;
+    if (count && count > 0) return;
 
     const newAlert = {
       id: `alert-${Date.now()}-${Math.random().toString(36).slice(2)}`,

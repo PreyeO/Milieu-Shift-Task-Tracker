@@ -4,6 +4,8 @@ import { useAuthStore } from "../store/authStore";
 import { getProgramById } from "../data/programs";
 import {
   getShiftLabel,
+  getShiftForTime,
+  getShiftDateString,
   parseSlotTime,
 } from "../utils/timeUtils";
 import { calculateCompliance } from "../utils/complianceUtils";
@@ -48,7 +50,7 @@ function CountdownTimer({ endTime }) {
 
 export default function StaffDashboard() {
   useTaskTimer();
-  const { user, selectedShift } = useAuthStore();
+  const { user, selectedShift, setShift } = useAuthStore();
   const sessions = useTaskStore((state) => state.sessions);
   const activeSessionKey = useTaskStore((state) => state.activeSessionKey);
   const isLoading = useTaskStore((state) => state.isLoading);
@@ -57,11 +59,14 @@ export default function StaffDashboard() {
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
-    // If the user refreshed the page, the store is empty. Re-initialize the session!
-    if (!activeSessionKey && user?.programId && selectedShift) {
-      initSession(user.programId, selectedShift, user.id);
-    }
-  }, [activeSessionKey, user, selectedShift, initSession]);
+    if (!user?.programId) return;
+    const currentShift = getShiftForTime(new Date().getHours());
+    const expectedKey = `${user.programId}-${currentShift}-${getShiftDateString()}`;
+    // Re-init if no session, shift changed, or returning from logout with stale key
+    if (activeSessionKey === expectedKey) return;
+    if (currentShift !== selectedShift) setShift(currentShift);
+    initSession(user.programId, currentShift, user.id);
+  }, [activeSessionKey, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const tasks = sessions[activeSessionKey]?.tasks || [];
   const program = getProgramById(user?.programId);
@@ -83,7 +88,11 @@ export default function StaffDashboard() {
     setModalOpen(true);
   };
 
-  if (isLoading) {
+  const expectedKey = user?.programId
+    ? `${user.programId}-${getShiftForTime(new Date().getHours())}-${getShiftDateString()}`
+    : null;
+
+  if (isLoading || (expectedKey !== null && activeSessionKey !== expectedKey)) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-milieuBlue"></div>

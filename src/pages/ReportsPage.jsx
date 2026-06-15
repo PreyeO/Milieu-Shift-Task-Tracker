@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTaskStore } from "../store/taskStore";
 import { PROGRAMS } from "../data/programs";
 import {
@@ -75,26 +75,35 @@ const generateWeeklyData = (sessions) => {
 const generateMonthlyData = () => {
   return Array.from({ length: 4 }, (_, i) => ({
     week: `Week ${i + 1}`,
-    "Parkside E": Math.round(72 + Math.random() * 25),
     Hudson: Math.round(68 + Math.random() * 28),
-    Orion: Math.round(75 + Math.random() * 22),
-    "Parkside B": Math.round(65 + Math.random() * 30),
   }));
 };
 
 export default function ReportsPage() {
   const sessions = useTaskStore((state) => state.sessions);
+  const fetchActiveSessions = useTaskStore((state) => state.fetchActiveSessions);
   const [reportType, setReportType] = useState("weekly");
   const [selectedProgram, setSelectedProgram] = useState("hudson");
   const [activeTab, setActiveTab] = useState("analytics");
   const [chartShift, setChartShift] = useState("day");
   const [chartDate, setChartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [chartProgram, setChartProgram] = useState(PROGRAMS[0]?.id || "hudson");
+
+  useEffect(() => {
+    fetchActiveSessions();
+  }, []);
 
   const allTasks = Object.values(sessions).flatMap((s) => s.tasks || []);
   const filteredTasks =
     selectedProgram === "all"
       ? allTasks
       : allTasks.filter((t) => t.programId === selectedProgram);
+
+  // Paper chart: read directly from the session for the selected program+shift
+  const chartSessionKey = Object.keys(sessions).find((key) =>
+    key.startsWith(`${chartProgram}-${chartShift}-`)
+  );
+  const chartTasks = sessions[chartSessionKey]?.tasks || [];
 
   const weeklyData = useMemo(() => generateWeeklyData(sessions), []);
   const monthlyData = useMemo(() => generateMonthlyData(), []);
@@ -286,18 +295,16 @@ export default function ReportsPage() {
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                {["Parkside E", "Hudson", "Orion", "Parkside B"].map(
-                  (prog, i) => (
-                    <Line
-                      key={prog}
-                      type="monotone"
-                      dataKey={prog}
-                      stroke={["#0ea5a0", "#3b82f6", "#8b5cf6", "#f97316"][i]}
-                      strokeWidth={2}
-                      dot={{ r: 3 }}
-                    />
-                  ),
-                )}
+                {["Hudson"].map((prog) => (
+                  <Line
+                    key={prog}
+                    type="monotone"
+                    dataKey={prog}
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                  />
+                ))}
               </LineChart>
             ) : (
               <BarChart data={weeklyData} barSize={20}>
@@ -456,8 +463,8 @@ export default function ReportsPage() {
               <label className="text-xs text-slate-500 mb-1 font-semibold">Program</label>
               <select
                 className="input-field py-1.5 text-sm w-48"
-                value={selectedProgram === "all" ? "hudson" : selectedProgram}
-                onChange={(e) => setSelectedProgram(e.target.value)}
+                value={chartProgram}
+                onChange={(e) => setChartProgram(e.target.value)}
               >
                 {PROGRAMS.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -489,11 +496,11 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          <PrintableChart 
-            tasks={filteredTasks.filter(t => t.shift === chartShift)}
-            program={PROGRAMS.find(p => p.id === (selectedProgram === "all" ? "hudson" : selectedProgram))}
+          <PrintableChart
+            tasks={chartTasks}
+            program={PROGRAMS.find(p => p.id === chartProgram)}
             shift={chartShift}
-            date={new Date(chartDate + 'T12:00:00')} // Force local noon to avoid timezone issues
+            date={new Date(chartDate + 'T12:00:00')}
           />
         </div>
       )}

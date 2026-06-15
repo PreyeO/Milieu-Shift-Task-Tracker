@@ -5,6 +5,7 @@ import { useAlertStore } from '../store/alertStore';
 import { useAuthStore } from '../store/authStore';
 import { parseSlotTime } from '../utils/timeUtils';
 import { detectBulkSubmit } from '../utils/complianceUtils';
+import { supabase } from '../services/supabaseClient';
 
 export const useTaskTimer = () => {
   const { refreshStatuses, refreshAllStatuses, getActiveTasks, markAlertSent, getAllSessions } = useTaskStore();
