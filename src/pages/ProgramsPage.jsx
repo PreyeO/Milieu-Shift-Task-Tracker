@@ -11,8 +11,6 @@ import {
   Sunset,
   Moon,
   Clock,
-  Users,
-  MapPin,
   MessageSquare,
   Activity,
 } from "lucide-react";
@@ -224,7 +222,7 @@ export default function ProgramsPage() {
           >
             {PROGRAMS.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name} — {p.type}
+                {p.name}
               </option>
             ))}
           </select>
@@ -259,25 +257,6 @@ export default function ProgramsPage() {
                   <h2 className="text-slate-800 text-lg font-black leading-tight">
                     {activeProgram.name}
                   </h2>
-                  <p className="text-slate-500 text-xs mt-0.5">
-                    {activeProgram.type}
-                  </p>
-                  <p className="text-slate-400 text-[10px] mt-1 flex items-center gap-1.5 flex-wrap">
-                    <span className="flex items-center gap-0.5">
-                      <MapPin size={10} />
-                      {activeProgram.location}
-                    </span>
-                    <span>•</span>
-                    <span className="flex items-center gap-0.5">
-                      <Users size={10} />
-                      Capacity: {activeProgram.capacity}
-                    </span>
-                  </p>
-                  <p className="text-slate-500 text-[9px] mt-1.5 font-semibold flex items-center gap-1 flex-wrap">
-                    <span>📞 {activeProgram.phoneNumber}</span>
-                    <span className="text-slate-400">|</span>
-                    <span>Contact: {activeProgram.staffContact}</span>
-                  </p>
                 </div>
               </div>
 

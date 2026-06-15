@@ -58,7 +58,7 @@ function ProgramCard({ program, session, alertCount, onClick }) {
     >
       <div className="flex items-start justify-between mb-4">
         <div>
-          <div className="flex items-center gap-2 mb-0.5">
+          <div className="flex items-center gap-2">
             <span
               className={`w-2 h-2 rounded-full ${hasActivity ? dotColor[program.color] : "bg-slate-300"} ${hasActivity ? "animate-pulse" : ""}`}
             />
@@ -66,7 +66,6 @@ function ProgramCard({ program, session, alertCount, onClick }) {
               {program.name}
             </h3>
           </div>
-          <p className="text-slate-500 text-xs">{program.type}</p>
         </div>
         <div className="flex items-center gap-2">
           {alertCount > 0 && (

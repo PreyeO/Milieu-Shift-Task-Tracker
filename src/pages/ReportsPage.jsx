@@ -17,10 +17,10 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
+  Legend,
   PieChart,
   Pie,
   Cell,
-  Legend,
 } from "recharts";
 import {
   BarChart3,
@@ -340,25 +340,41 @@ export default function ReportsPage() {
             30 Mins Task Status Breakdown
           </h3>
           {pieData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
-                  paddingAngle={3}
-                  dataKey="value"
-                >
-                  {pieData.map((entry, i) => (
-                    <Cell key={i} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-              </PieChart>
-            </ResponsiveContainer>
+            <>
+              <ResponsiveContainer width="100%" height={190}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={85}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {pieData.map((entry, i) => (
+                      <Cell key={i} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex justify-center gap-5 mt-3 flex-wrap">
+                {(() => {
+                  const total = pieData.reduce((s, d) => s + d.value, 0);
+                  return pieData.map((d) => (
+                    <div key={d.name} className="flex items-center gap-1.5 text-xs">
+                      <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: d.fill }} />
+                      <span className="text-slate-600">{d.name}</span>
+                      <span className="font-bold text-slate-800">
+                        {total > 0 ? Math.round((d.value / total) * 100) : 0}%
+                      </span>
+                      <span className="text-slate-400">({d.value})</span>
+                    </div>
+                  ));
+                })()}
+              </div>
+            </>
           ) : (
             <div className="h-[220px] flex items-center justify-center">
               <p className="text-slate-500 text-sm">
