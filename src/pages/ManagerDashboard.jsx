@@ -197,29 +197,17 @@ export default function ManagerDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-milieuNavy flex items-center gap-2">
-            <Shield size={22} className="text-milieuBlue" />
-            Manager Dashboard
+            <Shield size={22} className="text-milieuBlue flex-shrink-0" />
+            <span>Manager Dashboard</span>
           </h1>
           <p className="text-slate-500 text-sm mt-0.5">
             {getShiftLabel(currentShift)} · Real-time Overview
           </p>
         </div>
-        <div className="text-right flex items-center gap-4">
-          <button 
-            onClick={async () => {
-              if (window.confirm("This will clear all historical data from past days. Today's active shift data will remain. Continue?")) {
-                await resetSystem();
-                useAlertStore.getState().clearAlerts();
-                alert("Past data has been cleared. Today's shifts are intact.");
-              }
-            }}
-            className="text-xs text-rose-500 font-bold px-3 py-1.5 border border-rose-200 rounded-lg hover:bg-rose-50 transition-colors"
-          >
-            Clear History
-          </button>
+        <div className="flex flex-col items-end gap-2 flex-shrink-0">
           <div className="text-right">
             <p className="text-slate-500 text-xs">Today</p>
             <p className="text-slate-800 text-sm font-medium">
@@ -230,6 +218,18 @@ export default function ManagerDashboard() {
               })}
             </p>
           </div>
+          <button
+            onClick={async () => {
+              if (window.confirm("This will clear all historical data from past days. Today's active shift data will remain. Continue?")) {
+                await resetSystem();
+                useAlertStore.getState().clearAlerts();
+                alert("Past data has been cleared. Today's shifts are intact.");
+              }
+            }}
+            className="text-xs text-rose-500 font-bold px-3 py-1.5 border border-rose-200 rounded-lg hover:bg-rose-50 transition-colors whitespace-nowrap"
+          >
+            Clear History
+          </button>
         </div>
       </div>
 
