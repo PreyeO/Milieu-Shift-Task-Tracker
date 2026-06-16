@@ -28,14 +28,19 @@ export default function PrintableChart({ tasks, program, shift, date }) {
   };
 
   const getDescription = (task) => {
-    if (task.description) return task.description;
     const shiftTemplates = TASK_TEMPLATES[program?.id]?.[shift] || [];
-    return shiftTemplates.find(t => t.id === task.templateId)?.description || '';
+    const templateDesc = shiftTemplates.find(t => t.id === task.templateId)?.description;
+    return templateDesc || task.description || '';
   };
 
-  // Sort tasks by time
+  // Sort tasks by time, handling midnight-crossing for night shift
   const sortedTasks = [...tasks].sort((a, b) => {
-    return (a.startTime || '').localeCompare(b.startTime || '');
+    const toKey = (timeStr) => {
+      const [h, m] = (timeStr || '00:00').split(':').map(Number);
+      const mins = h * 60 + m;
+      return shift === 'night' && h < 7 ? mins + 1440 : mins;
+    };
+    return toKey(a.startTime) - toKey(b.startTime);
   });
 
   return (
@@ -57,7 +62,7 @@ export default function PrintableChart({ tasks, program, shift, date }) {
             <tbody>
               <tr>
                 <td className="border border-black p-2 font-bold w-1/4">
-                  {shift === 'day' ? '7:00am-3:00pm' : shift === 'evening' ? '3:00pm-11:00pm' : '11:00pm-7:00am'}
+                  {shift === 'day' ? 'Day Shift – 7:00am–3:00pm' : shift === 'evening' ? 'Evening Shift – 3:00pm–11:00pm' : 'Graveyard Shift – 11:00pm–7:00am'}
                 </td>
                 <td className="border border-black p-2 w-1/4">
                   <span className="font-bold">Date:</span> {format(date, 'MMM dd, yyyy')}
@@ -66,7 +71,7 @@ export default function PrintableChart({ tasks, program, shift, date }) {
                   Program: {program?.name || 'N/A'}
                 </td>
                 <td className="border border-black p-2 w-1/4">
-                  <span className="font-bold">Staff 1:</span>
+                  <span className="font-bold">Staff:</span>
                 </td>
               </tr>
             </tbody>
@@ -85,7 +90,7 @@ export default function PrintableChart({ tasks, program, shift, date }) {
               {sortedTasks.map((task) => (
                 <tr key={task.id}>
                   <td className="border border-black p-2 align-top font-bold text-xs whitespace-nowrap">
-                    {formatTimeSlot(task.startTime)} - {formatTimeSlot(task.endTime)}
+                    {formatTimeSlot(task.startTime)} – {formatTimeSlot(task.endTime)}
                   </td>
                   <td className="border border-black p-2 align-top text-xs whitespace-pre-wrap">
                     <span className="font-bold block mb-1">{task.title}</span>
@@ -98,6 +103,31 @@ export default function PrintableChart({ tasks, program, shift, date }) {
                     {task.status === 'completed' && task.completedBy ? task.completedBy.substring(0, 2).toUpperCase() : ''}
                     {task.status === 'missed' ? <span className="text-red-500 text-xs">MISSED</span> : ''}
                     {task.status === 'late' ? <span className="text-orange-500 text-xs">LATE</span> : ''}
+                  </td>
+                </tr>
+              ))}
+
+              {/* End-of-shift section divider */}
+              <tr className="bg-gray-100">
+                <td colSpan={4} className="border border-black p-2 text-xs font-bold text-center tracking-wide uppercase">
+                  End of Shift — Monthly Duties
+                </td>
+              </tr>
+
+              {/* Monthly duty rows with Yes / No + staff initial */}
+              {[
+                'Complete OFL for the month',
+                'Complete Emergency drills for the month',
+                'Complete Designated duties for the month',
+              ].map((duty) => (
+                <tr key={duty}>
+                  <td className="border border-black p-2 text-xs text-gray-400 italic text-center">—</td>
+                  <td className="border border-black p-2 text-xs font-medium">{duty}</td>
+                  <td className="border border-black p-2 text-xs text-center whitespace-nowrap">
+                    ☐ Yes &nbsp;&nbsp; ☐ No
+                  </td>
+                  <td className="border border-black p-2 text-xs text-center text-gray-400 italic">
+                    Initial:
                   </td>
                 </tr>
               ))}

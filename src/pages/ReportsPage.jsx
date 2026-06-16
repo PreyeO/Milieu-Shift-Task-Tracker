@@ -505,9 +505,9 @@ export default function ReportsPage() {
                 value={chartShift}
                 onChange={(e) => setChartShift(e.target.value)}
               >
-                <option value="day">Day (7a-3p)</option>
-                <option value="evening">Evening (3p-11p)</option>
-                <option value="night">Night (11p-7a)</option>
+                <option value="day">Day (7 AM – 3 PM)</option>
+                <option value="evening">Evening (3 PM – 11 PM)</option>
+                <option value="night">Graveyard (11 PM – 7 AM)</option>
               </select>
             </div>
           </div>

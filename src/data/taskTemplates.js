@@ -17,7 +17,7 @@ const hudsonDay = [
   { id: 'hud-13', startTime: '13:00', endTime: '13:30', title: 'Sensory Break & Sanitize', description: 'Engage person in sensory activity or sensory break\nWipe down high traffic areas (door knobs light switches etc)\nVerify bathroom is dry' },
   { id: 'hud-14', startTime: '13:30', endTime: '14:00', title: 'Laundry', description: 'Do laundry with person served (task analysis)\nVerify bathroom is dry' },
   { id: 'hud-15', startTime: '14:00', endTime: '14:30', title: 'Documentation & Body Check', description: 'Share vision Documentation Catalyst, Body Check,' },
-  { id: 'hud-16', startTime: '14:30', endTime: '15:00', title: 'Monthly Duties', description: 'Complete OFL for the month\nComplete Emergency drills for the month\nComplete Designated duties for the month' },
+  { id: 'hud-16', startTime: '14:30', endTime: '15:00', title: 'Sign Out & Handover', description: 'Complete all remaining documentation on Sharevision\nBody Check - complete and document\nSend Group message with shift summary and sign out\nVerify bathroom is dry' },
 ];
 
 const hudsonEvening = [
@@ -36,7 +36,7 @@ const hudsonEvening = [
   { id: 'hue-13', startTime: '21:00', endTime: '21:30', title: 'Living Room Tidy', description: 'Living room tidy wipe down tables and organize\nVerify bathroom is dry' },
   { id: 'hue-14', startTime: '21:30', endTime: '22:00', title: 'Wash Window Sills', description: 'Wash window sills in the kitchen and living room area\nVerify bathroom is dry' },
   { id: 'hue-15', startTime: '22:00', endTime: '22:30', title: 'Fridge Clean & Docs', description: 'Clean out the fridge of any outdated items and wipe down shelves\nDocumentation Catalyst, Body Check, Behavior Chart, ISP Reporting, Daily Activity logs, Cleaning Schedule\nVerify bathroom is dry' },
-  { id: 'hue-16', startTime: '22:30', endTime: '23:00', title: 'Sign Out & Monthly', description: 'Finish all documentation, Send Group message verifying information and picture of this document and sign out\nVerify bathroom is dry\n\nComplete OFL for the month\nComplete Emergency drills for the month\nComplete Designated duties for the month' },
+  { id: 'hue-16', startTime: '22:30', endTime: '23:00', title: 'Sign Out', description: 'Finish all documentation, Send Group message verifying information and picture of this document and sign out\nVerify bathroom is dry' },
 ];
 
 const hudsonNight = [
@@ -53,9 +53,9 @@ const hudsonNight = [
   { id: 'hun-11', startTime: '04:00', endTime: '04:30', title: 'Checks & Temp', description: 'Staff to check in on residents\nAnd record grave yard check in on\nComplete ALL temp checks fridges freezers and taps\nVerify if bathroom is dry' },
   { id: 'hun-12', startTime: '04:30', endTime: '05:00', title: 'Window Sills & Baseboards', description: 'Window sills and baseboards cleaned in common areas\nVerify if bathroom is dry' },
   { id: 'hun-13', startTime: '05:00', endTime: '05:30', title: 'Checks & Foyer', description: 'Staff to check in on residents\nAnd record grave yard check in\nFront foyer area wipe down and sanitize doors shelves railings.\nVerify if bathroom is dry' },
-  { id: 'hun-14', startTime: '05:30', endTime: '06:00', title: 'Office Tidy, OFL & Drills', description: 'Organize office desk and drawers tidy all office space.\nComplete OFL – email certificate to manager\nComplete Drills that have been assigned to you\nVerify if bathroom is dry' },
+  { id: 'hun-14', startTime: '05:30', endTime: '06:00', title: 'Office Tidy', description: 'Organize office desk and drawers tidy all office space.\nVerify if bathroom is dry' },
   { id: 'hun-15', startTime: '06:00', endTime: '06:30', title: 'Checks & Sharevision (Part 1)', description: 'Staff to check in on residents\nAnd record grave yard check in\nVerify if bathroom is dry' },
-  { id: 'hun-16', startTime: '06:30', endTime: '07:00', title: 'Checks, Sharevision & Sign Out', description: 'Staff to check in on residents\nAnd record grave yard check in on\nComplete cleaning duties on sharevision\nFinish all documentation, Send Group message verifying information and picture of this document and sign out\nVerify if bathroom is dry\n\nComplete OFL for the month\nComplete Emergency drills for the month\nComplete Designated duties for the month' },
+  { id: 'hun-16', startTime: '06:30', endTime: '07:00', title: 'Checks, Sharevision & Sign Out', description: 'Staff to check in on residents\nAnd record grave yard check in on\nComplete cleaning duties on sharevision\nFinish all documentation\nVerify if bathroom is dry' },
 ];
 
 export const TASK_TEMPLATES = {

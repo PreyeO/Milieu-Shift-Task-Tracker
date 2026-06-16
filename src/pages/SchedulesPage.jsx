@@ -16,9 +16,9 @@ import {
 import toast from "react-hot-toast";
 
 const SHIFTS = [
-  { key: "day", label: "Morning Shift (7 AM – 3 PM)" },
-  { key: "evening", label: "Day Shift (3 PM – 11 PM)" },
-  { key: "night", label: "Grave yard Shift (11 PM – 7 AM)" },
+  { key: "day", label: "Day Shift (7 AM – 3 PM)" },
+  { key: "evening", label: "Evening Shift (3 PM – 11 PM)" },
+  { key: "night", label: "Graveyard Shift (11 PM – 7 AM)" },
 ];
 
 export default function SchedulesPage() {
@@ -41,10 +41,15 @@ export default function SchedulesPage() {
   // Always use the fresh imported TASK_TEMPLATES for schedules management
   const rawTasks = TASK_TEMPLATES[selectedProgram]?.[selectedShift] || [];
 
-  // Sort tasks chronologically by start time
-  const sortedTasks = [...rawTasks].sort((a, b) =>
-    a.startTime.localeCompare(b.startTime),
-  );
+  // Sort tasks chronologically, handling midnight-crossing for graveyard shift
+  const sortedTasks = [...rawTasks].sort((a, b) => {
+    const toKey = (timeStr) => {
+      const [h, m] = (timeStr || '00:00').split(':').map(Number);
+      const mins = h * 60 + m;
+      return selectedShift === 'night' && h < 7 ? mins + 1440 : mins;
+    };
+    return toKey(a.startTime) - toKey(b.startTime);
+  });
 
   const handleOpenCreateModal = () => {
     setEditingTask(null);

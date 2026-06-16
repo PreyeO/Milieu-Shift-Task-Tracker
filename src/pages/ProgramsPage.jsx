@@ -17,16 +17,16 @@ import {
 import Badge from "../components/ui/Badge";
 
 const SHIFT_TABS = [
-  { key: "day", label: "Morning Shift", icon: Sun, time: "7:00 AM – 3:00 PM" },
+  { key: "day", label: "Day Shift", icon: Sun, time: "7:00 AM – 3:00 PM" },
   {
     key: "evening",
-    label: "Day Shift",
+    label: "Evening Shift",
     icon: Sunset,
     time: "3:00 PM – 11:00 PM",
   },
   {
     key: "night",
-    label: "Grave yard Shift",
+    label: "Graveyard Shift",
     icon: Moon,
     time: "11:00 PM – 7:00 AM",
   },

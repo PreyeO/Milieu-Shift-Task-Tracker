@@ -19,7 +19,7 @@ export const getShiftForTime = (hour) => {
 };
 
 export const getShiftLabel = (shift) => {
-  const labels = { day: 'Morning Shift (7:00 AM – 3:00 PM)', evening: 'Day Shift (3:00 PM – 11:00 PM)', night: 'Grave yard Shift (11:00 PM – 7:00 AM)' };
+  const labels = { day: 'Day Shift (7:00 AM – 3:00 PM)', evening: 'Evening Shift (3:00 PM – 11:00 PM)', night: 'Graveyard Shift (11:00 PM – 7:00 AM)' };
   return labels[shift] || shift;
 };
 
