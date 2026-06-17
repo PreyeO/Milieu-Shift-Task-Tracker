@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/authStore';
 import { parseSlotTime } from '../utils/timeUtils';
 import { detectBulkSubmit } from '../utils/complianceUtils';
 import { supabase } from '../services/supabaseClient';
+import { requestNotificationPermission, playChime, showTaskNotification } from '../utils/notificationUtils';
 
 export const useTaskTimer = () => {
   const { refreshStatuses, refreshAllStatuses, getActiveTasks, markAlertSent, getAllSessions } = useTaskStore();
@@ -14,6 +15,8 @@ export const useTaskTimer = () => {
   const intervalRef = useRef(null);
 
   useEffect(() => {
+    requestNotificationPermission();
+
     const tick = () => {
       // refreshStatuses handles the active staff session
       // refreshAllStatuses handles ALL sessions (needed for manager view)
@@ -34,14 +37,15 @@ export const useTaskTimer = () => {
           const windowEnd = parseSlotTime(task.endTime);
           const msIntoWindow = now - windowStart;
 
-          // 5-min reminder
-          const fiveMin = 5 * 60 * 1000;
-          if (msIntoWindow >= fiveMin && msIntoWindow < fiveMin + 30000 && now < windowEnd) {
-            // Only toast if staff is logged in and belongs to this program, OR manager
+          // 15-min halfway reminder (sound + browser notification)
+          const fifteenMin = 15 * 60 * 1000;
+          if (msIntoWindow >= fifteenMin && msIntoWindow < fifteenMin + 30000 && now < windowEnd && !task.completedAt) {
             if (user?.role === 'manager' || user?.programId === task.programId) {
-              toast(`⏰ Reminder: "${task.title}" is due now!`, {
-                duration: 6000,
-                style: { background: '#1e3a5f', color: '#fff', border: '1px solid #0ea5a0' },
+              playChime();
+              showTaskNotification(task.title);
+              toast(`⏰ "${task.title}" — halfway through its window!`, {
+                duration: 8000,
+                style: { background: '#1e3a5f', color: '#fff', border: '1px solid #f59e0b' },
               });
             }
           }
