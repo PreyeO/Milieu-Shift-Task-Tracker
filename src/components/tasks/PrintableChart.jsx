@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import html2canvas from 'html2canvas';
-import { Download } from 'lucide-react';
+import { Download, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatTimeSlot } from '../../utils/timeUtils';
 import { TASK_TEMPLATES } from '../../data/taskTemplates';
@@ -27,6 +27,42 @@ export default function PrintableChart({ tasks, program, shift, date, monthlyDut
     }
   };
 
+  const handlePrint = () => {
+    if (!chartRef.current) return;
+    const win = window.open('', '_blank', 'width=900,height=700');
+    win.document.write(`<!DOCTYPE html><html><head>
+      <meta charset="utf-8"/>
+      <title>${program?.name || 'Program'} — ${shift} shift — ${format(date, 'MMM dd yyyy')}</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background: #fff; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+        td, th { border: 1px solid #000; padding: 5px 7px; vertical-align: top; }
+        th { background: #f3f4f6; font-weight: bold; text-align: left; }
+        .header-table td { font-size: 11px; }
+        .section-divider td { background: #f3f4f6; font-weight: bold; text-align: center;
+          text-transform: uppercase; letter-spacing: 0.05em; font-size: 10px; }
+        .time-col { font-weight: bold; white-space: nowrap; width: 110px; }
+        .activity-col { white-space: pre-wrap; }
+        .task-title { font-weight: bold; display: block; margin-bottom: 3px; }
+        .rationale-col { width: 160px; font-style: italic; color: #555; }
+        .initial-col { width: 80px; text-align: center; font-weight: bold; color: #0ea5a0; }
+        .monthly-dash { text-align: center; color: #aaa; font-style: italic; width: 110px; }
+        .monthly-yn { text-align: center; white-space: nowrap; width: 160px; font-weight: 500; }
+        .footer { margin-top: 24px; font-size: 10px; text-align: center; color: #666; font-style: italic; }
+        .missed { color: #ef4444; font-weight: bold; }
+        .late   { color: #f97316; font-weight: bold; }
+        @media print {
+          body { padding: 10px; }
+          @page { margin: 10mm; size: A4 landscape; }
+        }
+      </style>
+    </head><body>${chartRef.current.innerHTML}</body></html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); }, 300);
+  };
+
   const getDescription = (task) => {
     const shiftTemplates = TASK_TEMPLATES[program?.id]?.[shift] || [];
     const templateDesc = shiftTemplates.find(t => t.id === task.templateId)?.description;
@@ -45,7 +81,14 @@ export default function PrintableChart({ tasks, program, shift, date, monthlyDut
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={handlePrint}
+          className="btn-secondary flex items-center gap-2 text-sm"
+        >
+          <Printer size={15} />
+          Print
+        </button>
         <button
           onClick={handleDownloadImage}
           className="btn-primary flex items-center gap-2 text-sm"
