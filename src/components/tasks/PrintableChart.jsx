@@ -1,11 +1,11 @@
 import { useRef } from 'react';
 import html2canvas from 'html2canvas';
-import { Download, Printer } from 'lucide-react';
+import { Download, Printer, Loader } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatTimeSlot } from '../../utils/timeUtils';
 import { TASK_TEMPLATES } from '../../data/taskTemplates';
 
-export default function PrintableChart({ tasks, program, shift, date, monthlyDuties }) {
+export default function PrintableChart({ tasks, program, shift, date, monthlyDuties, onBulkPrint, onBulkDownload, bulkPrinting, bulkDownloading }) {
   const chartRef = useRef(null);
 
   const handleDownloadImage = async () => {
@@ -81,21 +81,35 @@ export default function PrintableChart({ tasks, program, shift, date, monthlyDut
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end gap-2">
-        <button
-          onClick={handlePrint}
-          className="btn-secondary flex items-center gap-2 text-sm"
-        >
+      <div className="flex justify-end gap-2 flex-wrap">
+        <button onClick={handlePrint} className="btn-secondary flex items-center gap-2 text-sm">
           <Printer size={15} />
           Print
         </button>
-        <button
-          onClick={handleDownloadImage}
-          className="btn-primary flex items-center gap-2 text-sm"
-        >
+        <button onClick={handleDownloadImage} className="btn-primary flex items-center gap-2 text-sm">
           <Download size={15} />
-          Download as Image
+          Download Image
         </button>
+        {onBulkPrint && (
+          <button
+            onClick={onBulkPrint}
+            disabled={bulkPrinting || bulkDownloading}
+            className="btn-secondary flex items-center gap-2 text-sm disabled:opacity-40"
+          >
+            {bulkPrinting ? <Loader size={14} className="animate-spin" /> : <Printer size={14} />}
+            {bulkPrinting ? 'Opening…' : 'Bulk Print'}
+          </button>
+        )}
+        {onBulkDownload && (
+          <button
+            onClick={onBulkDownload}
+            disabled={bulkPrinting || bulkDownloading}
+            className="btn-primary flex items-center gap-2 text-sm disabled:opacity-40"
+          >
+            {bulkDownloading ? <Loader size={14} className="animate-spin" /> : <Download size={14} />}
+            {bulkDownloading ? 'Building ZIP…' : 'Download ZIP'}
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto bg-white p-6 shadow-sm rounded-lg border border-slate-200">

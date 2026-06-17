@@ -6,6 +6,8 @@ import {
   calculateOnTimeRate,
 } from "../utils/complianceUtils";
 import PrintableChart from "../components/tasks/PrintableChart";
+import { bulkPrint, bulkDownloadZip, generateDateStrings } from "../utils/bulkExport";
+import toast from "react-hot-toast";
 
 import {
   BarChart,
@@ -79,15 +81,98 @@ const generateMonthlyData = () => {
   }));
 };
 
+const BULK_SHIFTS = [
+  { key: 'day',     label: 'Day' },
+  { key: 'evening', label: 'Evening' },
+  { key: 'night',   label: 'Graveyard' },
+];
+
+function getWeekRange(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const day = d.getDay();
+  const mon = new Date(d); mon.setDate(d.getDate() - ((day + 6) % 7));
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  return { start: mon, end: sun };
+}
+
+function getMonthRange(year, month) {
+  return { start: new Date(year, month, 1), end: new Date(year, month + 1, 0) };
+}
+
 export default function ReportsPage() {
   const sessions = useTaskStore((state) => state.sessions);
   const fetchActiveSessions = useTaskStore((state) => state.fetchActiveSessions);
+  const fetchSessionsForDateRange = useTaskStore((s) => s.fetchSessionsForDateRange);
+
   const [reportType, setReportType] = useState("weekly");
   const [selectedProgram, setSelectedProgram] = useState("hudson");
   const [activeTab, setActiveTab] = useState("analytics");
   const [chartShift, setChartShift] = useState("day");
   const [chartDate, setChartDate] = useState(new Date().toISOString().split('T')[0]);
   const [chartProgram, setChartProgram] = useState(PROGRAMS[0]?.id || "hudson");
+
+  // Bulk export state
+  const [bulkRangeType, setBulkRangeType] = useState('day');
+  const [bulkDate, setBulkDate] = useState(new Date().toISOString().split('T')[0]);
+  const [bulkMonth, setBulkMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [bulkShifts, setBulkShifts] = useState(['day', 'evening', 'night']);
+  const [bulkPrinting, setBulkPrinting] = useState(false);
+  const [bulkDownloading, setBulkDownloading] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0 });
+
+  const toggleBulkShift = (key) =>
+    setBulkShifts(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+
+  const getBulkRange = () => {
+    if (bulkRangeType === 'day') {
+      const d = new Date(bulkDate + 'T12:00:00');
+      return { start: d, end: d, label: bulkDate };
+    }
+    if (bulkRangeType === 'week') {
+      const { start, end } = getWeekRange(bulkDate);
+      return { start, end, label: `Week of ${start.toDateString()}` };
+    }
+    const [y, m] = bulkMonth.split('-').map(Number);
+    const { start, end } = getMonthRange(y, m - 1);
+    return { start, end, label: bulkMonth };
+  };
+
+  const fetchBulkFiltered = async () => {
+    const { start, end } = getBulkRange();
+    const allSessions = await fetchSessionsForDateRange(generateDateStrings(start, end));
+    return Object.fromEntries(
+      Object.entries(allSessions).filter(([, e]) => bulkShifts.includes(e.session.shift))
+    );
+  };
+
+  const handleBulkPrint = async () => {
+    if (!bulkShifts.length) { toast.error('Select at least one shift.'); return; }
+    setBulkPrinting(true);
+    try {
+      const s = await fetchBulkFiltered();
+      if (!Object.keys(s).length) { toast.error('No data found for that range.'); return; }
+      await bulkPrint(s);
+    } catch (e) {
+      console.error(e); toast.error('Bulk print failed.');
+    } finally { setBulkPrinting(false); }
+  };
+
+  const handleBulkDownload = async () => {
+    if (!bulkShifts.length) { toast.error('Select at least one shift.'); return; }
+    setBulkDownloading(true);
+    setBulkProgress({ done: 0, total: 0 });
+    try {
+      const s = await fetchBulkFiltered();
+      const total = Object.keys(s).length;
+      if (!total) { toast.error('No data found for that range.'); return; }
+      setBulkProgress({ done: 0, total });
+      const { label } = getBulkRange();
+      await bulkDownloadZip(s, `ShiftReports_${label}`, (done, t) => setBulkProgress({ done, total: t }));
+      toast.success(`ZIP downloaded — ${total} chart${total !== 1 ? 's' : ''}.`);
+    } catch (e) {
+      console.error(e); toast.error('Download failed.');
+    } finally { setBulkDownloading(false); setBulkProgress({ done: 0, total: 0 }); }
+  };
 
   useEffect(() => {
     fetchActiveSessions();
@@ -474,41 +559,114 @@ export default function ReportsPage() {
       </div>
       ) : (
         <div className="space-y-6">
-          <div className="glass-card p-4 flex flex-wrap items-center gap-4">
-            <div className="flex flex-col">
-              <label className="text-xs text-slate-500 mb-1 font-semibold">Program</label>
-              <select
-                className="input-field py-1.5 text-sm w-48"
-                value={chartProgram}
-                onChange={(e) => setChartProgram(e.target.value)}
-              >
-                {PROGRAMS.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+          <div className="glass-card p-4 space-y-4">
+            {/* Single chart filters */}
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="flex flex-col">
+                <label className="text-xs text-slate-500 mb-1 font-semibold">Program</label>
+                <select
+                  className="input-field py-1.5 text-sm w-48"
+                  value={chartProgram}
+                  onChange={(e) => setChartProgram(e.target.value)}
+                >
+                  {PROGRAMS.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label className="text-xs text-slate-500 mb-1 font-semibold">Date</label>
+                <input
+                  type="date"
+                  className="input-field py-1.5 text-sm w-40"
+                  value={chartDate}
+                  onChange={(e) => setChartDate(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-xs text-slate-500 mb-1 font-semibold">Shift</label>
+                <select
+                  className="input-field py-1.5 text-sm w-44"
+                  value={chartShift}
+                  onChange={(e) => setChartShift(e.target.value)}
+                >
+                  <option value="day">Day (7 AM – 3 PM)</option>
+                  <option value="evening">Evening (3 PM – 11 PM)</option>
+                  <option value="night">Graveyard (11 PM – 7 AM)</option>
+                </select>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <label className="text-xs text-slate-500 mb-1 font-semibold">Date</label>
-              <input
-                type="date"
-                className="input-field py-1.5 text-sm w-40"
-                value={chartDate}
-                onChange={(e) => setChartDate(e.target.value)}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-xs text-slate-500 mb-1 font-semibold">Shift</label>
-              <select
-                className="input-field py-1.5 text-sm w-32"
-                value={chartShift}
-                onChange={(e) => setChartShift(e.target.value)}
-              >
-                <option value="day">Day (7 AM – 3 PM)</option>
-                <option value="evening">Evening (3 PM – 11 PM)</option>
-                <option value="night">Graveyard (11 PM – 7 AM)</option>
-              </select>
+
+            {/* Bulk export filters */}
+            <div className="border-t border-slate-100 pt-3 flex flex-wrap items-end gap-4">
+              <div className="flex flex-col">
+                <label className="text-xs text-slate-500 mb-1 font-semibold">Bulk Range</label>
+                <div className="flex gap-1">
+                  {['day', 'week', 'month'].map(r => (
+                    <button
+                      key={r}
+                      onClick={() => setBulkRangeType(r)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors capitalize ${
+                        bulkRangeType === r
+                          ? 'bg-milieuBlue text-white border-milieuBlue'
+                          : 'border-slate-200 text-slate-600 hover:border-milieuBlue'
+                      }`}
+                    >
+                      {r === 'day' ? 'Day' : r === 'week' ? 'Week' : 'Month'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <label className="text-xs text-slate-500 mb-1 font-semibold">
+                  {bulkRangeType === 'week' ? 'Any date in week' : bulkRangeType === 'month' ? 'Month' : 'Date'}
+                </label>
+                {bulkRangeType === 'month' ? (
+                  <input
+                    type="month"
+                    className="input-field py-1.5 text-sm w-40"
+                    value={bulkMonth}
+                    onChange={e => setBulkMonth(e.target.value)}
+                  />
+                ) : (
+                  <input
+                    type="date"
+                    className="input-field py-1.5 text-sm w-40"
+                    value={bulkDate}
+                    onChange={e => setBulkDate(e.target.value)}
+                  />
+                )}
+              </div>
+              <div className="flex flex-col">
+                <label className="text-xs text-slate-500 mb-1 font-semibold">Shifts to include</label>
+                <div className="flex gap-3 flex-wrap h-[34px] items-center">
+                  {BULK_SHIFTS.map(({ key, label }) => (
+                    <label key={key} className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={bulkShifts.includes(key)}
+                        onChange={() => toggleBulkShift(key)}
+                        className="rounded"
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {/* ZIP progress inline */}
+              {bulkDownloading && bulkProgress.total > 0 && (
+                <div className="flex flex-col justify-end">
+                  <span className="text-xs text-slate-500">
+                    {bulkProgress.done} / {bulkProgress.total} charts…
+                  </span>
+                  <div className="h-1.5 w-32 bg-slate-100 rounded-full overflow-hidden mt-1">
+                    <div
+                      className="h-full bg-milieuBlue rounded-full transition-all duration-200"
+                      style={{ width: `${Math.round((bulkProgress.done / bulkProgress.total) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -518,6 +676,10 @@ export default function ReportsPage() {
             shift={chartShift}
             date={new Date(chartDate + 'T12:00:00')}
             monthlyDuties={sessions[chartSessionKey]?.monthlyDuties ?? null}
+            onBulkPrint={handleBulkPrint}
+            onBulkDownload={handleBulkDownload}
+            bulkPrinting={bulkPrinting}
+            bulkDownloading={bulkDownloading}
           />
         </div>
       )}

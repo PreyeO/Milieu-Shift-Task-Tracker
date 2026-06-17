@@ -457,6 +457,41 @@ export const useTaskStore = create((set, get) => ({
     const { error } = await supabase.from('shift_tasks').update({ alert_sent: true }).eq('id', taskId);
     if (error) console.error('[markAlertSent] Supabase update failed:', error);
   },
+  fetchSessionsForDateRange: async (dateStrings) => {
+    if (!dateStrings?.length) return {};
+    const { data: sessions } = await supabase
+      .from('shift_sessions').select('*').in('date', dateStrings);
+    if (!sessions?.length) return {};
+
+    const { data: tasks } = await supabase
+      .from('shift_tasks').select('*')
+      .in('session_id', sessions.map(s => s.id));
+
+    const result = {};
+    sessions.forEach(session => {
+      const sessionTasks = (tasks || [])
+        .filter(t => t.session_id === session.id)
+        .map(t => ({
+          ...t,
+          startTime: t.start_time, endTime: t.end_time,
+          completedAt: t.completed_at, completedBy: t.completed_by,
+          templateId: t.template_id,
+        }));
+      const key = `${session.program_id}-${session.shift}-${session.date}`;
+      const existing = result[key];
+      const thisDone = sessionTasks.filter(t => t.completed_at).length;
+      const existingDone = existing?.tasks?.filter(t => t.completedAt).length ?? -1;
+      if (!existing || thisDone >= existingDone) {
+        result[key] = {
+          session,
+          tasks: sessionTasks,
+          monthlyDuties: session.monthly_duties ?? null,
+        };
+      }
+    });
+    return result;
+  },
+
   getAllSessions: () => get().sessions,
   clearOldSessions: () => {},
   
