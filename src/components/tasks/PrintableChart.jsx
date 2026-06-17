@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { formatTimeSlot } from '../../utils/timeUtils';
 import { TASK_TEMPLATES } from '../../data/taskTemplates';
 
-export default function PrintableChart({ tasks, program, shift, date }) {
+export default function PrintableChart({ tasks, program, shift, date, monthlyDuties }) {
   const chartRef = useRef(null);
 
   const handleDownloadImage = async () => {
@@ -131,26 +131,34 @@ export default function PrintableChart({ tasks, program, shift, date }) {
                 </td>
               </tr>
 
-              {/* Monthly duty rows with Yes / No + staff initials */}
+              {/* Monthly duty rows — pre-filled if staff submitted digitally */}
               {[
-                'Complete OFL for the month',
-                'Complete Emergency drills for the month',
-                'Complete Designated duties for the month',
-              ].map((duty) => (
-                <tr key={duty}>
-                  <td className="border border-black p-2 text-xs text-gray-400 italic text-center">—</td>
-                  <td className="border border-black p-2 text-xs font-medium">{duty}</td>
-                  <td className="border border-black p-2 text-xs text-center whitespace-nowrap">
-                    ☐ Yes &nbsp;&nbsp; ☐ No
-                  </td>
-                  <td className="border border-black p-2 text-xs text-center text-gray-400 italic">
-                    Initial:
-                  </td>
-                  <td className="border border-black p-2 text-xs text-center text-gray-400 italic">
-                    Initial:
-                  </td>
-                </tr>
-              ))}
+                { key: 'ofl',        label: 'Complete OFL for the month' },
+                { key: 'drills',     label: 'Complete Emergency drills for the month' },
+                { key: 'designated', label: 'Complete Designated duties for the month' },
+              ].map((duty) => {
+                const data = monthlyDuties?.[duty.key];
+                const [s1, s2] = (data?.initials || '').split('/');
+                return (
+                  <tr key={duty.key}>
+                    <td className="border border-black p-2 text-xs text-gray-400 italic text-center">—</td>
+                    <td className="border border-black p-2 text-xs font-medium">{duty.label}</td>
+                    <td className="border border-black p-2 text-xs text-center whitespace-nowrap font-medium">
+                      {data
+                        ? data.yes
+                          ? '☑ Yes   ☐ No'
+                          : '☐ Yes   ☑ No'
+                        : '☐ Yes   ☐ No'}
+                    </td>
+                    <td className="border border-black p-2 text-xs text-center font-bold text-milieuBlue">
+                      {s1 || <span className="text-gray-400 font-normal italic">Initial:</span>}
+                    </td>
+                    <td className="border border-black p-2 text-xs text-center font-bold text-milieuBlue">
+                      {s2 || <span className="text-gray-400 font-normal italic">Initial:</span>}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
 

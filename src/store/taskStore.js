@@ -151,7 +151,9 @@ export const useTaskStore = create((set, get) => ({
                 startedAt: session.started_at,
                 staffId: session.staff_id,
                 programId: session.program_id,
-                shift: session.shift
+                shift: session.shift,
+                sessionId: session.id,
+                monthlyDuties: session.monthly_duties ?? null,
               };
             }
           });
@@ -222,9 +224,17 @@ export const useTaskStore = create((set, get) => ({
         });
 
         set((state) => ({
-          sessions: { 
-            ...state.sessions, 
-            [sessionKey]: { tasks: mappedTasks, startedAt: existingSession.started_at, staffId, programId, shift } 
+          sessions: {
+            ...state.sessions,
+            [sessionKey]: {
+              tasks: mappedTasks,
+              startedAt: existingSession.started_at,
+              staffId,
+              programId,
+              shift,
+              sessionId: existingSession.id,
+              monthlyDuties: existingSession.monthly_duties ?? null,
+            }
           },
           activeSessionKey: sessionKey,
           isLoading: false
@@ -268,9 +278,17 @@ export const useTaskStore = create((set, get) => ({
     });
 
     set((state) => ({
-      sessions: { 
-        ...state.sessions, 
-        [sessionKey]: { tasks: mappedTasks, startedAt: newSession.started_at, staffId, programId, shift } 
+      sessions: {
+        ...state.sessions,
+        [sessionKey]: {
+          tasks: mappedTasks,
+          startedAt: newSession.started_at,
+          staffId,
+          programId,
+          shift,
+          sessionId: newSessionId,
+          monthlyDuties: null,
+        }
       },
       activeSessionKey: sessionKey,
       isLoading: false
@@ -311,6 +329,20 @@ export const useTaskStore = create((set, get) => ({
     if (error) {
       console.error('[completeTask] Supabase update failed — completion may not persist on reload:', error);
     }
+  },
+
+  saveMonthlyDuties: async (sessionKey, duties) => {
+    const { sessions } = get();
+    const session = sessions[sessionKey];
+    if (!session) return;
+    set((state) => ({
+      sessions: { ...state.sessions, [sessionKey]: { ...session, monthlyDuties: duties } },
+    }));
+    const { error } = await supabase
+      .from('shift_sessions')
+      .update({ monthly_duties: duties })
+      .eq('id', session.sessionId);
+    if (error) console.error('[saveMonthlyDuties] Supabase update failed:', error);
   },
 
   refreshStatuses: async () => {

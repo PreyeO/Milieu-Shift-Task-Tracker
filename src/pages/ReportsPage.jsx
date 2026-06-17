@@ -517,6 +517,7 @@ export default function ReportsPage() {
             program={PROGRAMS.find(p => p.id === chartProgram)}
             shift={chartShift}
             date={new Date(chartDate + 'T12:00:00')}
+            monthlyDuties={sessions[chartSessionKey]?.monthlyDuties ?? null}
           />
         </div>
       )}

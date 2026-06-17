@@ -12,6 +12,7 @@ import { calculateCompliance } from "../utils/complianceUtils";
 import { useTaskTimer } from "../hooks/useTaskTimer";
 import TaskCard from "../components/tasks/TaskCard";
 import TaskSignOffModal from "../components/tasks/TaskSignOffModal";
+import MonthlyDutiesCard from "../components/tasks/MonthlyDutiesCard";
 
 import { CheckCircle, Calendar, Sun, Sunset, Moon } from "lucide-react";
 
@@ -229,6 +230,12 @@ export default function StaffDashboard() {
           )}
         </div>
       </div>
+
+      <MonthlyDutiesCard
+        sessionKey={activeSessionKey}
+        shift={selectedShift}
+        monthlyDuties={sessions[activeSessionKey]?.monthlyDuties ?? null}
+      />
 
       <TaskSignOffModal
         task={selectedTask}
