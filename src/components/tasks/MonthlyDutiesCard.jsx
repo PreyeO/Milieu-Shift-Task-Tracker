@@ -9,13 +9,13 @@ const DUTIES = [
   { key: 'designated', label: 'Complete Designated duties for the month' },
 ];
 
-// Returns true when we're in the last 30 minutes of the shift
+// Unlocks in the last 30 mins of shift and stays open for 1 hour after shift ends
 function isCardActive(shift) {
   const now = new Date();
   const h = now.getHours() + now.getMinutes() / 60;
-  if (shift === 'day')     return h >= 14.5 && h < 15;
-  if (shift === 'evening') return h >= 22.5 && h < 23;
-  if (shift === 'night')   return h >= 6.5  && h < 7;
+  if (shift === 'day')     return h >= 14.5 && h < 16;          // 2:30 PM – 4:00 PM
+  if (shift === 'evening') return h >= 22.5 || h < 0.5;         // 10:30 PM – 12:30 AM
+  if (shift === 'night')   return (h >= 6.5 && h < 8);          // 6:30 AM – 8:00 AM
   return false;
 }
 
