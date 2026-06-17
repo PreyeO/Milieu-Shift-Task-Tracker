@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 export default function TaskSignOffModal({ task, isOpen, onClose }) {
   const [comment, setComment] = useState('');
   const [initials, setInitials] = useState('');
+  const [staff2Initials, setStaff2Initials] = useState('');
   const [confirming, setConfirming] = useState(false);
   const { completeTask } = useTaskStore();
   const { user } = useAuthStore();
@@ -32,7 +33,10 @@ export default function TaskSignOffModal({ task, isOpen, onClose }) {
       const windowEnd = parseSlotTime(task.endTime, now);
       const isLate = now > windowEnd;
 
-      completeTask(task.id, comment, initials.toUpperCase().trim());
+      const combined = staff2Initials.trim()
+        ? `${initials.toUpperCase().trim()}/${staff2Initials.toUpperCase().trim()}`
+        : initials.toUpperCase().trim();
+      completeTask(task.id, comment, combined);
 
       if (isLate) {
         addAlert({
@@ -52,6 +56,7 @@ export default function TaskSignOffModal({ task, isOpen, onClose }) {
       setConfirming(false);
       setComment('');
       setInitials('');
+      setStaff2Initials('');
       onClose();
     }, 600);
   };
@@ -90,18 +95,33 @@ export default function TaskSignOffModal({ task, isOpen, onClose }) {
         {/* Comment & Initials */}
         {!task.completedAt && (
           <>
-            <div>
-              <label className="text-slate-700 text-sm font-medium flex items-center gap-2 mb-2">
-                Staff Initials <span className="text-milieuCoral">*</span>
-              </label>
-              <input
-                type="text"
-                maxLength={3}
-                className="input-field uppercase placeholder:normal-case"
-                placeholder="e.g. JD"
-                value={initials}
-                onChange={(e) => setInitials(e.target.value)}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-slate-700 text-sm font-medium flex items-center gap-2 mb-2">
+                  Staff 1 Initials <span className="text-milieuCoral">*</span>
+                </label>
+                <input
+                  type="text"
+                  maxLength={3}
+                  className="input-field uppercase placeholder:normal-case"
+                  placeholder="e.g. JD"
+                  value={initials}
+                  onChange={(e) => setInitials(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-slate-700 text-sm font-medium flex items-center gap-2 mb-2">
+                  Staff 2 Initials <span className="text-slate-400 text-xs font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  maxLength={3}
+                  className="input-field uppercase placeholder:normal-case"
+                  placeholder="e.g. MK"
+                  value={staff2Initials}
+                  onChange={(e) => setStaff2Initials(e.target.value)}
+                />
+              </div>
             </div>
 
             <div>
