@@ -63,6 +63,22 @@ export default function PrintableChart({ tasks, program, shift, date, monthlyDut
     setTimeout(() => { win.print(); }, 300);
   };
 
+  // Compute status from the actual shift date, not the stored DB value.
+  // Stored status is unreliable for historical charts (auto-created sessions stay 'upcoming').
+  const computeStatus = (task) => {
+    const windowEnd = (timeStr) => {
+      const [h, m] = (timeStr || '00:00').split(':').map(Number);
+      const d = new Date(date);
+      d.setHours(h, m, 0, 0);
+      if (shift === 'night' && h < 7) d.setDate(d.getDate() + 1);
+      return d;
+    };
+    if (task.completedAt) {
+      return new Date(task.completedAt) > windowEnd(task.endTime) ? 'late' : 'completed';
+    }
+    return new Date() > windowEnd(task.endTime) ? 'missed' : 'upcoming';
+  };
+
   const getDescription = (task) => {
     const shiftTemplates = TASK_TEMPLATES[program?.id]?.[shift] || [];
     const templateDesc = shiftTemplates.find(t => t.id === task.templateId)?.description;
@@ -162,10 +178,11 @@ export default function PrintableChart({ tasks, program, shift, date, monthlyDut
                   </td>
                   {(() => {
                     const [s1, s2] = (task.completedBy || '').split('/');
-                    const statusBadge = task.status === 'missed'
-                      ? <span className="text-red-500 text-xs">MISSED</span>
-                      : task.status === 'late'
-                        ? <span className="text-orange-500 text-xs">LATE</span>
+                    const st = computeStatus(task);
+                    const statusBadge = st === 'missed'
+                      ? <span className="text-red-500 text-xs font-bold">MISSED</span>
+                      : st === 'late'
+                        ? <span className="text-orange-500 text-xs font-bold">LATE</span>
                         : null;
                     return (
                       <>

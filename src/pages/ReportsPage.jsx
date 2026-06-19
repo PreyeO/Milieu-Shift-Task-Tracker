@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useTaskStore } from "../store/taskStore";
 import { PROGRAMS } from "../data/programs";
+import { convertISOToShiftDateString } from "../utils/timeUtils";
 import {
   calculateCompliance,
   calculateOnTimeRate,
@@ -175,8 +176,12 @@ export default function ReportsPage() {
   };
 
   useEffect(() => {
-    fetchActiveSessions();
+    fetchActiveSessions(); // analytics tab: always load today
   }, []);
+
+  useEffect(() => {
+    fetchActiveSessions(convertISOToShiftDateString(chartDate)); // paper chart: load selected date
+  }, [chartDate]);
 
   const allTasks = Object.values(sessions).flatMap((s) => s.tasks || []);
   const filteredTasks =
@@ -184,10 +189,8 @@ export default function ReportsPage() {
       ? allTasks
       : allTasks.filter((t) => t.programId === selectedProgram);
 
-  // Paper chart: read directly from the session for the selected program+shift
-  const chartSessionKey = Object.keys(sessions).find((key) =>
-    key.startsWith(`${chartProgram}-${chartShift}-`)
-  );
+  // Paper chart: convert ISO chartDate to the same format session keys use (toDateString)
+  const chartSessionKey = `${chartProgram}-${chartShift}-${convertISOToShiftDateString(chartDate)}`;
   const chartTasks = sessions[chartSessionKey]?.tasks || [];
 
   const weeklyData = useMemo(() => generateWeeklyData(sessions), []);

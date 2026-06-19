@@ -14,6 +14,20 @@ const DUTY_KEYS = [
   { key: 'designated', label: 'Complete Designated duties for the month' },
 ];
 
+function computeStatus(task, date, shift) {
+  const windowEnd = (timeStr) => {
+    const [h, m] = (timeStr || '00:00').split(':').map(Number);
+    const d = new Date(date);
+    d.setHours(h, m, 0, 0);
+    if (shift === 'night' && h < 7) d.setDate(d.getDate() + 1);
+    return d;
+  };
+  if (task.completedAt) {
+    return new Date(task.completedAt) > windowEnd(task.endTime) ? 'late' : 'completed';
+  }
+  return new Date() > windowEnd(task.endTime) ? 'missed' : 'upcoming';
+}
+
 function sortTasks(tasks, shift) {
   return [...tasks].sort((a, b) => {
     const toKey = (t) => {
@@ -52,11 +66,12 @@ export function buildChartHTML(tasks, program, shift, date, monthlyDuties) {
     const comment = esc(task.comment || '');
     const timeSlot = `${formatTimeSlot(task.startTime)} – ${formatTimeSlot(task.endTime)}`;
 
+    const st = computeStatus(task, date, shift);
     let s1Cell = s1
       ? `<span style="color:#0ea5a0;font-weight:bold">${esc(s1)}</span>`
-      : task.status === 'missed'
+      : st === 'missed'
         ? '<span style="color:#ef4444;font-size:10px;font-weight:bold">MISSED</span>'
-        : task.status === 'late'
+        : st === 'late'
           ? '<span style="color:#f97316;font-size:10px;font-weight:bold">LATE</span>'
           : '';
     const s2Cell = s2 ? `<span style="color:#0ea5a0;font-weight:bold">${esc(s2)}</span>` : '';
